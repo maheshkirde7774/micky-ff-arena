@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Tournaments - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="section-header">
+    <div class="section-title">
+      <i class="fa-solid fa-trophy text-acid"></i>
+      <div>
+        <small>COMPETITIVE BRACKETS</small>
+        <h2>Free Fire Tournaments</h2>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <a href="{{ url_for('main.tournaments', status='ALL') }}" class="btn {% if active_tab == 'ALL' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">All</a>
+      <a href="{{ url_for('main.tournaments', status='UPCOMING') }}" class="btn {% if active_tab == 'UPCOMING' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Upcoming & Open</a>
+      <a href="{{ url_for('main.tournaments', status='LIVE') }}" class="btn {% if active_tab == 'LIVE' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Live</a>
+      <a href="{{ url_for('main.tournaments', status='COMPLETED') }}" class="btn {% if active_tab == 'COMPLETED' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Completed</a>
+    </div>
+  </div>
+
+  <div class="tournament-grid">
+    {% for tour in tournaments %}
+      <div class="tour-card">
+        <div class="tour-banner-wrap">
+          <img src="{{ tour.banner or 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80' }}" alt="{{ tour.name }}" class="tour-banner-img">
+          <div class="tour-overlay"></div>
+          
+          {% if tour.status == 'REGISTRATION OPEN' %}
+            <span class="tour-status-badge status-open">REGISTRATION OPEN</span>
+          {% elif tour.status == 'LIVE' %}
+            <span class="tour-status-badge status-live">● LIVE NOW</span>
+          {% elif tour.status == 'FULL' %}
+            <span class="tour-status-badge status-full">FULL</span>
+          {% elif tour.status == 'COMPLETED' %}
+            <span class="tour-status-badge status-completed">COMPLETED</span>
+          {% else %}
+            <span class="tour-status-badge status-upcoming">UPCOMING</span>
+          {% endif %}
+
+          <span class="tour-map-badge"><i class="fa-solid fa-map-location-dot"></i> {{ tour.map }}</span>
+        </div>
+
+        <div class="tour-body">
+          <h3 class="tour-title">{{ tour.name }}</h3>
+          
+          <div class="tour-meta-grid">
+            <div class="tour-meta-item">
+              <small>Date & Time</small>
+              <strong>{{ tour.date }} | {{ tour.time }}</strong>
+            </div>
+            <div class="tour-meta-item">
+              <small>Mode</small>
+              <strong>{{ tour.game_mode }}</strong>
+            </div>
+            <div class="tour-meta-item">
+              <small>Entry Fee</small>
+              <strong class="fee">{% if tour.entry_fee == 0 %}FREE{% else %}₹{{ tour.entry_fee|int }}{% endif %}</strong>
+            </div>
+            <div class="tour-meta-item">
+              <small>Prize Pool</small>
+              <strong class="prize">₹{{ tour.prize_pool|int }}</strong>
+            </div>
+          </div>
+
+          <div class="tour-capacity">
+            <div class="capacity-label">
+              <span>Teams: {{ tour.registered_teams_count }} / {{ tour.max_teams }}</span>
+              <span>{{ ((tour.registered_teams_count / tour.max_teams) * 100)|int }}% Full</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-fill" style="width: {{ [((tour.registered_teams_count / tour.max_teams) * 100)|int, 100]|min }}%;"></div>
+            </div>
+          </div>
+
+          <div class="tour-foot">
+            <a href="{{ url_for('main.tournament_details', tournament_id=tour.id) }}" class="btn btn-primary" style="width: 100%;">
+              <i class="fa-solid fa-circle-info"></i> View Details
+            </a>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="panel" style="grid-column: 1 / -1; text-align: center; padding: 48px;">
+        <i class="fa-solid fa-trophy" style="font-size: 3rem; color: var(--muted); margin-bottom: 16px;"></i>
+        <h3>No Tournaments Found</h3>
+        <p style="color: var(--muted);">There are no tournaments currently listed under this filter.</p>
+        <a href="{{ url_for('main.tournaments') }}" class="btn btn-outline btn-sm" style="margin-top: 14px;">Reset Filters</a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

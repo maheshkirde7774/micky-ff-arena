@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit Result - Match #{{ match.match_number }} - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 650px;">
+  <div class="section-header">
+    <div class="section-title">
+      <i class="fa-solid fa-flag-checkered text-acid"></i>
+      <div>
+        <small>{{ match.tournament.name }} • MATCH #{{ match.match_number }}</small>
+        <h2>Submit Match Result</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <small style="color: var(--muted); font-family: var(--font-mono); font-size: 11px;">SUBMITTING FOR SQUAD</small>
+        <h3 style="margin-top: 2px;">{{ team.team_name }}</h3>
+        <span style="font-family: var(--font-mono); color: var(--acid); font-size: 13px;">Team ID: {{ team.team_id }}</span>
+      </div>
+      <div>
+        <span class="badge badge-info">Map: {{ match.map }}</span>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('main.result_submit', match_id=match.id) }}" enctype="multipart/form-data">
+      
+      <div class="form-row">
+        <!-- Placement -->
+        <div class="form-group">
+          <label for="placementInput"><i class="fa-solid fa-ranking-star"></i> Final Placement (Rank) <span class="required">*</span></label>
+          <input type="number" id="placementInput" name="placement" min="1" max="48" value="{{ result.placement if result else '' }}" placeholder="e.g. 1 (for Booyah!)" required>
+          <div class="form-helper">Enter rank between 1 and 48</div>
+        </div>
+
+        <!-- Kills -->
+        <div class="form-group">
+          <label for="killsInput"><i class="fa-solid fa-crosshairs"></i> Total Squad Kills <span class="required">*</span></label>
+          <input type="number" id="killsInput" name="kills" min="0" max="60" value="{{ result.kills if result else '' }}" placeholder="e.g. 12" required>
+          <div class="form-helper">Sum of all squad member kills</div>
+        </div>
+      </div>
+
+      <!-- Live Estimated Score Calculation Preview -->
+      <div style="background: var(--surface-2); border: 1px dashed var(--border-light); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 24px; font-size: 13px;">
+        <span style="font-family: var(--font-mono); color: var(--muted); font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 8px;">
+          <i class="fa-solid fa-calculator text-acid"></i> Estimated Points Breakdown (Official Rules):
+        </span>
+        <div id="pointsPreview">
+          <div style="color: var(--muted);">Enter placement and kills above to preview score.</div>
+        </div>
+      </div>
+
+      <!-- Screenshot Upload -->
+      <div class="form-group">
+        <label for="screenshot"><i class="fa-solid fa-image"></i> End-Game Score Screenshot <span class="required">*</span></label>
+        <input type="file" id="screenshot" name="screenshot" accept="image/*" {% if not result %}required{% endif %}>
+        <div class="form-helper">
+          Upload clear screenshot of the post-match summary screen showing placement and team kills.
+          {% if result and result.screenshot %}
+            <div style="margin-top: 6px; color: var(--acid);">
+              <i class="fa-solid fa-circle-check"></i> Previously uploaded screenshot is on file. Choose new file only to replace it.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="background: rgba(255, 118, 86, 0.08); border-left: 3px solid var(--orange); padding: 12px 14px; margin-bottom: 24px; font-size: 13px; color: var(--text-dim);">
+        <i class="fa-solid fa-shield-halved text-orange" style="margin-right: 6px;"></i>
+        False reporting or doctored screenshots will result in immediate disqualification and permanent platform ban.
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+        <i class="fa-solid fa-upload"></i> Submit for Admin Verification
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

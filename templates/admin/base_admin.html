@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Console - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <!-- Admin Sidebar -->
+  <aside class="admin-sidebar">
+    <div style="margin-bottom: 20px; padding: 0 10px;">
+      <small style="color: var(--orange); font-family: var(--font-mono); font-weight: 700; letter-spacing: 2px;">ADMINISTRATOR</small>
+      <h3 style="font-size: 1.3rem; margin-top: 2px;">WAR ROOM</h3>
+    </div>
+
+    <ul class="admin-sidebar-nav">
+      <li>
+        <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+          <i class="fa-solid fa-gauge-high"></i> Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.tournaments') }}" class="{% if 'tournament' in request.endpoint %}active{% endif %}">
+          <i class="fa-solid fa-trophy"></i> Tournaments
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.teams') }}" class="{% if request.endpoint == 'admin.teams' %}active{% endif %}">
+          <i class="fa-solid fa-users"></i> Teams Roster
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.matches') }}" class="{% if request.endpoint == 'admin.matches' %}active{% endif %}">
+          <i class="fa-solid fa-gamepad"></i> Matches & Rooms
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.results') }}" class="{% if request.endpoint == 'admin.results' %}active{% endif %}">
+          <i class="fa-solid fa-check-to-slot"></i> Result Verification
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.leaderboard') }}" class="{% if request.endpoint == 'admin.leaderboard' %}active{% endif %}">
+          <i class="fa-solid fa-ranking-star"></i> Standings
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.users') }}" class="{% if request.endpoint == 'admin.users' %}active{% endif %}">
+          <i class="fa-solid fa-user-shield"></i> User Accounts
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.complaints') }}" class="{% if request.endpoint == 'admin.complaints' %}active{% endif %}">
+          <i class="fa-solid fa-envelope-open-text"></i> Complaints Inbox
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.settings') }}" class="{% if request.endpoint == 'admin.settings' %}active{% endif %}">
+          <i class="fa-solid fa-sliders"></i> Scoring Rules
+        </a>
+      </li>
+      <li style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 12px;">
+        <a href="{{ url_for('main.index') }}" style="color: var(--muted);">
+          <i class="fa-solid fa-arrow-left"></i> Exit to Main Arena
+        </a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Admin Main Body -->
+  <section class="admin-body">
+    {% block admin_content %}{% endblock %}
+  </section>
+</div>
+{% endblock %}

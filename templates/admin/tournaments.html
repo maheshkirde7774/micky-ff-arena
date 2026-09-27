@@ -1,0 +1,131 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block admin_content %}
+<div>
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+    <div>
+      <span class="badge badge-warning" style="margin-bottom: 6px;">COMPETITION DIRECTORY</span>
+      <h1>TOURNAMENT MANAGEMENT</h1>
+    </div>
+    <a href="{{ url_for('admin.create_tournament') }}" class="btn btn-primary">
+      <i class="fa-solid fa-plus"></i> Create New Tournament
+    </a>
+  </div>
+
+  <!-- Filter tabs -->
+  <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+    <a href="{{ url_for('admin.tournaments', status='ALL') }}" class="btn {% if active_tab == 'ALL' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">All ({{ tournaments|length }})</a>
+    <a href="{{ url_for('admin.tournaments', status='REGISTRATION OPEN') }}" class="btn {% if active_tab == 'REGISTRATION OPEN' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Open</a>
+    <a href="{{ url_for('admin.tournaments', status='LIVE') }}" class="btn {% if active_tab == 'LIVE' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Live</a>
+    <a href="{{ url_for('admin.tournaments', status='COMPLETED') }}" class="btn {% if active_tab == 'COMPLETED' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Completed</a>
+  </div>
+
+  <div class="panel" style="padding: 0; overflow: hidden;">
+    <div class="table-responsive">
+      <table class="cyber-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name & Map</th>
+            <th>Date & Time</th>
+            <th>Slots</th>
+            <th>Prize Pool</th>
+            <th>Status</th>
+            <th>Quick Status Action</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tournaments %}
+            <tr>
+              <td>#{{ t.id }}</td>
+              <td>
+                <strong style="font-size: 1.05rem;">{{ t.name }}</strong>
+                <div style="font-size: 12px; color: var(--muted);">Map: {{ t.map }} • Mode: {{ t.game_mode }}</div>
+              </td>
+              <td>
+                {{ t.date }}<br>
+                <small style="color: var(--muted);">{{ t.time }}</small>
+              </td>
+              <td>
+                <strong>{{ t.registered_teams_count }}</strong> / {{ t.max_teams }}
+              </td>
+              <td>
+                <strong class="text-acid">₹{{ t.prize_pool|int }}</strong><br>
+                <small style="color: var(--orange);">Fee: ₹{{ t.entry_fee|int }}</small>
+              </td>
+              <td>
+                {% if t.status == 'REGISTRATION OPEN' %}
+                  <span class="badge badge-success">OPEN</span>
+                {% elif t.status == 'LIVE' %}
+                  <span class="badge badge-danger">LIVE</span>
+                {% elif t.status == 'FULL' %}
+                  <span class="badge badge-warning">FULL</span>
+                {% elif t.status == 'COMPLETED' %}
+                  <span class="badge badge-info">COMPLETED</span>
+                {% else %}
+                  <span class="badge badge-info">UPCOMING</span>
+                {% endif %}
+              </td>
+              <td>
+                <!-- Quick Status Change dropdown/buttons -->
+                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                  {% if t.status != 'REGISTRATION OPEN' %}
+                    <form method="POST" action="{{ url_for('admin.set_tournament_status', tournament_id=t.id, new_status='REGISTRATION OPEN') }}">
+                      <button type="submit" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 10px;" title="Open Registration">
+                        Open
+                      </button>
+                    </form>
+                  {% endif %}
+
+                  {% if t.status != 'REGISTRATION CLOSED' %}
+                    <form method="POST" action="{{ url_for('admin.set_tournament_status', tournament_id=t.id, new_status='REGISTRATION CLOSED') }}">
+                      <button type="submit" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 10px;" title="Close Registration">
+                        Close
+                      </button>
+                    </form>
+                  {% endif %}
+
+                  {% if t.status != 'LIVE' %}
+                    <form method="POST" action="{{ url_for('admin.set_tournament_status', tournament_id=t.id, new_status='LIVE') }}">
+                      <button type="submit" class="btn btn-orange btn-sm" style="padding: 2px 6px; font-size: 10px;" title="Start Tournament">
+                        Start
+                      </button>
+                    </form>
+                  {% endif %}
+
+                  {% if t.status != 'COMPLETED' %}
+                    <form method="POST" action="{{ url_for('admin.set_tournament_status', tournament_id=t.id, new_status='COMPLETED') }}">
+                      <button type="submit" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 10px;" title="Mark as Completed">
+                        Complete
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+              <td style="text-align: right;">
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                  <a href="{{ url_for('admin.edit_tournament', tournament_id=t.id) }}" class="btn btn-outline btn-sm" title="Edit Tournament">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </a>
+                  <form method="POST" action="{{ url_for('admin.delete_tournament', tournament_id=t.id) }}" onsubmit="return confirm('Are you sure you want to permanently delete this tournament and its matches?');">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Tournament">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 36px; color: var(--muted);">
+                No tournaments found under this tab.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

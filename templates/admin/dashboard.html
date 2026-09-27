@@ -1,0 +1,168 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block admin_content %}
+<div>
+  <!-- Header -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 28px;">
+    <div>
+      <span class="badge badge-warning" style="margin-bottom: 6px;">LIVE ARENA OPERATIONS</span>
+      <h1>ADMIN DASHBOARD</h1>
+      <p style="color: var(--muted); font-size: 14px;">Real-time tournament overview, match coordination, and score auditing.</p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+      <a href="{{ url_for('admin.create_tournament') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Create Tournament
+      </a>
+      <a href="{{ url_for('admin.matches') }}" class="btn btn-orange">
+        <i class="fa-solid fa-gamepad"></i> Schedule Match
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Counter Cards -->
+  <div class="dash-stat-grid">
+    <div class="dash-stat-box primary">
+      <div class="box-label"><i class="fa-solid fa-users"></i> Total Users</div>
+      <div class="box-value text-acid">{{ total_users }}</div>
+      <small style="color: var(--muted);">Registered Players</small>
+    </div>
+
+    <div class="dash-stat-box cyan">
+      <div class="box-label"><i class="fa-solid fa-people-group"></i> Total Teams</div>
+      <div class="box-value text-cyan">{{ total_teams }}</div>
+      <small style="color: var(--muted);">Registered Squads</small>
+    </div>
+
+    <div class="dash-stat-box orange">
+      <div class="box-label"><i class="fa-solid fa-fire"></i> Active Tournaments</div>
+      <div class="box-value text-orange">{{ active_tournaments }}</div>
+      <small style="color: var(--muted);">Open / Live</small>
+    </div>
+
+    <div class="dash-stat-box gold">
+      <div class="box-label"><i class="fa-solid fa-trophy"></i> Completed</div>
+      <div class="box-value text-gold">{{ completed_tournaments }}</div>
+      <small style="color: var(--muted);">Archived</small>
+    </div>
+
+    <div class="dash-stat-box primary">
+      <div class="box-label"><i class="fa-solid fa-gamepad"></i> Total Matches</div>
+      <div class="box-value">{{ total_matches }}</div>
+      <small style="color: var(--muted);">Custom Rooms</small>
+    </div>
+
+    <div class="dash-stat-box" style="border-color: {% if pending_results > 0 %}var(--orange){% else %}var(--border){% endif %};">
+      <div class="box-label"><i class="fa-solid fa-clock text-orange"></i> Pending Results</div>
+      <div class="box-value text-orange">{{ pending_results }}</div>
+      <small style="color: var(--muted);">Needs Verification</small>
+    </div>
+  </div>
+
+  <!-- Lower Section: Recent Registrations, Results, Complaints -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 10px;">
+    
+    <!-- Recent Teams -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3><i class="fa-solid fa-users text-acid"></i> Recent Squad Registrations</h3>
+        <a href="{{ url_for('admin.teams') }}" class="btn btn-outline btn-sm">Manage All</a>
+      </div>
+
+      {% if recent_teams %}
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          {% for t in recent_teams %}
+            <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong>{{ t.team_name }}</strong>
+                <div style="font-size: 12px; color: var(--muted);">
+                  Tournament: {{ t.tournament.name }} • Captain: {{ t.captain.name }}
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <span class="badge {% if t.status == 'APPROVED' %}badge-success{% elif t.status == 'PENDING' %}badge-warning{% else %}badge-danger{% endif %}">
+                  {{ t.status }}
+                </span>
+                <span style="display: block; font-family: var(--font-mono); font-size: 11px; color: var(--acid); margin-top: 4px;">{{ t.team_id }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--muted); text-align: center; padding: 20px;">No teams registered yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Recent Results Pending Verification -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3><i class="fa-solid fa-check-to-slot text-orange"></i> Recent Match Results</h3>
+        <a href="{{ url_for('admin.results') }}" class="btn btn-outline btn-sm">Verify All</a>
+      </div>
+
+      {% if recent_results %}
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          {% for r in recent_results %}
+            <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong>{{ r.team.team_name }}</strong>
+                <div style="font-size: 12px; color: var(--muted);">
+                  Match #{{ r.match.match_number }} • Rank #{{ r.placement }} • Kills: {{ r.kills }}
+                </div>
+              </div>
+              <div>
+                {% if r.verification_status == 'APPROVED' %}
+                  <span class="badge badge-success">APPROVED ({{ r.total_points }} pts)</span>
+                {% elif r.verification_status == 'PENDING VERIFICATION' %}
+                  <span class="badge badge-warning">PENDING REVIEW</span>
+                {% else %}
+                  <span class="badge badge-danger">REJECTED</span>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--muted); text-align: center; padding: 20px;">No match results submitted yet.</p>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Recent Complaints Strip -->
+  <div class="panel" style="margin-top: 24px;">
+    <div class="panel-header">
+      <h3><i class="fa-solid fa-envelope-open-text text-cyan"></i> Recent Player Complaints & Disputes</h3>
+      <a href="{{ url_for('admin.complaints') }}" class="btn btn-outline btn-sm">View Support Inbox</a>
+    </div>
+
+    {% if recent_complaints %}
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        {% for c in recent_complaints %}
+          <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <span class="badge badge-info" style="font-size: 11px;">{{ c.category }}</span>
+              <strong style="margin-left: 8px;">{{ c.subject }}</strong>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                By: {{ c.user.name }} ({{ c.user.email }}) • {{ c.created_at.strftime('%b %d, %Y') }}
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              {% if c.status == 'OPEN' %}
+                <span class="badge badge-warning">OPEN</span>
+              {% elif c.status == 'IN PROGRESS' %}
+                <span class="badge badge-info">IN PROGRESS</span>
+              {% else %}
+                <span class="badge badge-success">RESOLVED</span>
+              {% endif %}
+              <a href="{{ url_for('admin.complaints') }}" class="btn btn-outline btn-sm">Reply</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color: var(--muted); text-align: center; padding: 20px;">No pending player complaints.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

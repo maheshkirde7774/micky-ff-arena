@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Registration Successful - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 700px; padding-top: 30px;">
+  <div class="panel" style="text-align: center; border-color: var(--acid); box-shadow: 0 0 30px rgba(210, 250, 81, 0.15);">
+    
+    <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(210, 250, 81, 0.15); border: 2px solid var(--acid); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px; color: var(--acid); box-shadow: 0 0 20px var(--acid-glow);">
+      <i class="fa-solid fa-check"></i>
+    </div>
+
+    <span class="badge badge-success" style="font-size: 13px; margin-bottom: 12px;">SQUAD CONFIRMED</span>
+    <h1 style="font-size: 2.6rem; margin-bottom: 6px;">REGISTRATION SUCCESSFUL</h1>
+    <p style="color: var(--muted); font-size: 14px; margin-bottom: 24px;">Your squad is officially registered into the tournament bracket.</p>
+
+    <!-- Unique Team ID Box -->
+    <div style="background: var(--surface-2); border: 1px dashed var(--acid); border-radius: var(--radius-md); padding: 20px; margin-bottom: 28px;">
+      <small style="font-family: var(--font-mono); color: var(--muted); font-size: 12px; letter-spacing: 2px; text-transform: uppercase;">YOUR OFFICIAL TEAM ID</small>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 6px;">
+        <span style="font-family: var(--font-mono); font-size: 2.2rem; font-weight: 900; color: var(--acid); letter-spacing: 3px;" id="teamIdText">{{ team.team_id }}</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="copyToClipboard('{{ team.team_id }}', this, 'COPIED!')">
+          <i class="fa-solid fa-copy"></i> Copy ID
+        </button>
+      </div>
+      <small style="color: var(--text-dim); display: block; margin-top: 8px; font-size: 12px;">Save this Team ID for match check-in, score submission, and verification.</small>
+    </div>
+
+    <!-- Registration Details Grid -->
+    <div style="text-align: left; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px; margin-bottom: 28px;">
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">Tournament:</span>
+        <strong style="color: var(--text);">{{ tournament.name }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">Team Name:</span>
+        <strong class="text-orange">{{ team.team_name }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">Registration Status:</span>
+        <div>
+          {% if team.status == 'APPROVED' %}
+            <span class="badge badge-success">APPROVED</span>
+          {% else %}
+            <span class="badge badge-warning">PENDING VERIFICATION</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="padding-top: 14px;">
+        <span style="color: var(--muted); font-size: 12px; font-family: var(--font-mono); text-transform: uppercase; display: block; margin-bottom: 8px;">Registered Squad Roster:</span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+          <div style="background: var(--surface-3); padding: 8px 12px; border-radius: 4px;">
+            <strong>Captain:</strong> {{ team.captain.name }} ({{ team.captain.free_fire_uid }})
+          </div>
+          <div style="background: var(--surface-3); padding: 8px 12px; border-radius: 4px;">
+            <strong>Player 2:</strong> {{ team.player2_name }} ({{ team.player2_uid }})
+          </div>
+          <div style="background: var(--surface-3); padding: 8px 12px; border-radius: 4px;">
+            <strong>Player 3:</strong> {{ team.player3_name }} ({{ team.player3_uid }})
+          </div>
+          <div style="background: var(--surface-3); padding: 8px 12px; border-radius: 4px;">
+            <strong>Player 4:</strong> {{ team.player4_name }} ({{ team.player4_uid }})
+          </div>
+          {% if team.substitute_name %}
+            <div style="background: var(--surface-3); padding: 8px 12px; border-radius: 4px; grid-column: span 2;">
+              <strong>Substitute:</strong> {{ team.substitute_name }} ({{ team.substitute_uid }})
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+      <a href="{{ url_for('main.my_tournaments') }}" class="btn btn-primary">
+        <i class="fa-solid fa-gamepad"></i> Go to My Tournaments
+      </a>
+      <a href="{{ url_for('main.tournament_details', tournament_id=tournament.id) }}" class="btn btn-secondary">
+        <i class="fa-solid fa-eye"></i> View Bracket
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,410 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block admin_content %}
+<div>
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+    <div>
+      <span class="badge badge-warning" style="margin-bottom: 6px;">CUSTOM ROOM CONTROL</span>
+      <h1>MATCH MANAGEMENT</h1>
+      <p style="color: var(--muted); font-size: 14px;">Schedule match rounds, set maps, and release custom Room ID & Password.</p>
+    </div>
+    <button class="btn btn-primary" onclick="document.getElementById('scheduleMatchModal').showModal()">
+      <i class="fa-solid fa-plus"></i> Schedule New Match
+    </button>
+  </div>
+
+  <!-- Matches Table -->
+  <div class="panel" style="padding: 0; overflow: hidden; margin-bottom: 30px;">
+    <div class="table-responsive">
+      <table class="cyber-table">
+        <thead>
+          <tr>
+            <th>Match #</th>
+            <th>Tournament</th>
+            <th>Date & Time</th>
+            <th>Map</th>
+            <th>Room ID</th>
+            <th>Room Password</th>
+            <th>Room Status</th>
+            <th>Match Status</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in matches %}
+            <tr>
+              <td>
+                <span class="badge {% if m.status == 'Live' %}badge-danger{% elif m.status == 'Completed' %}badge-success{% else %}badge-info{% endif %}">
+                  Match #{{ m.match_number }}
+                </span>
+              </td>
+              <td>
+                <strong>{{ m.tournament.name }}</strong>
+              </td>
+              <td>
+                {{ m.date }}<br>
+                <small style="color: var(--muted);">{{ m.time }}</small>
+              </td>
+              <td>
+                <i class="fa-solid fa-map-location-dot text-acid"></i> {{ m.map }}
+              </td>
+              <td>
+                {% if m.room_id %}
+                  <code style="color: var(--acid); font-weight: 700;">{{ m.room_id }}</code>
+                {% else %}
+                  <span style="color: var(--muted); font-style: italic;">Not set</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if m.room_password %}
+                  <code style="color: var(--orange);">{{ m.room_password }}</code>
+                {% else %}
+                  <span style="color: var(--muted); font-style: italic;">Not set</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if m.effective_room_status == 'PUBLISHED' %}
+                  <span class="badge badge-success" style="font-size: 11px;"><i class="fa-solid fa-door-open"></i> ROOM PUBLISHED</span>
+                {% elif m.effective_room_status == 'SCHEDULED' %}
+                  <span class="badge badge-warning" style="font-size: 11px;"><i class="fa-solid fa-clock"></i> ROOM SCHEDULED</span>
+                {% elif m.effective_room_status == 'LIVE' %}
+                  <span class="badge badge-danger" style="font-size: 11px;"><i class="fa-solid fa-tower-broadcast"></i> LIVE</span>
+                {% elif m.effective_room_status == 'COMPLETED' %}
+                  <span class="badge badge-info" style="font-size: 11px;"><i class="fa-solid fa-circle-check"></i> COMPLETED</span>
+                {% else %}
+                  <span class="badge badge-secondary" style="font-size: 11px;"><i class="fa-solid fa-circle-question"></i> ROOM NOT SET</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge {% if m.status == 'Live' %}badge-danger{% elif m.status == 'Completed' %}badge-success{% else %}badge-info{% endif %}">
+                  {{ m.status }}
+                </span>
+              </td>
+              <td style="text-align: right;">
+                <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-primary btn-sm" onclick="openRoomManagementModal('{{ m.id }}', '{{ m.tournament.name|escape }}', '{{ m.match_number }}', '{{ m.date }}', '{{ m.time }}', '{{ m.map }}', '{{ m.room_id or '' }}', '{{ m.room_password or '' }}', '{{ m.release_date_input }}', '{{ m.release_time_input }}', '{{ m.effective_room_status }}', {{ 'true' if m.room_published else 'false' }})" title="Manage Custom Room">
+                    <i class="fa-solid fa-key"></i> Room
+                  </button>
+
+                  <button type="button" class="btn btn-outline btn-sm" onclick="openEditMatchModal('{{ m.id }}', '{{ m.match_number }}', '{{ m.date }}', '{{ m.time }}', '{{ m.map }}', '{{ m.room_id }}', '{{ m.room_password }}', '{{ m.room_release_time }}', '{{ m.status }}')" title="Edit Match">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+
+                  <form method="POST" action="{{ url_for('admin.delete_match', match_id=m.id) }}" onsubmit="return confirm('Delete this match and all associated results?');" style="display:inline;">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Match">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="9" style="text-align: center; padding: 36px; color: var(--muted);">
+                No matches scheduled yet. Click "Schedule New Match" to create one.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ROOM MANAGEMENT MODAL -->
+  <dialog id="roomManagementModal" style="background: var(--surface); border: 1px solid var(--acid); border-radius: var(--radius-md); padding: 28px; color: var(--text); max-width: 650px; width: 92%; margin: auto; box-shadow: 0 0 50px rgba(0, 0, 0, 0.95);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 14px;">
+      <div>
+        <span class="badge badge-warning" style="margin-bottom: 4px; font-size: 11px;">CUSTOM ROOM CONTROL</span>
+        <h3 style="margin: 0; color: var(--acid); font-family: var(--font-display);"><i class="fa-solid fa-key"></i> Room Management</h3>
+      </div>
+      <button type="button" onclick="document.getElementById('roomManagementModal').close()" style="background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer;">&times;</button>
+    </div>
+
+    <!-- Match Summary Details -->
+    <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; font-size: 13px;">
+      <div>
+        <span style="color: var(--muted); font-size: 11px; display: block; font-family: var(--font-mono);">TOURNAMENT</span>
+        <strong id="rmModalTournament" style="color: #fff;">-</strong>
+      </div>
+      <div>
+        <span style="color: var(--muted); font-size: 11px; display: block; font-family: var(--font-mono);">MATCH NUMBER</span>
+        <strong id="rmModalMatchNum" style="color: var(--acid);">-</strong>
+      </div>
+      <div>
+        <span style="color: var(--muted); font-size: 11px; display: block; font-family: var(--font-mono);">DATE & TIME</span>
+        <span id="rmModalDateTime" style="color: var(--text-dim);">-</span>
+      </div>
+      <div>
+        <span style="color: var(--muted); font-size: 11px; display: block; font-family: var(--font-mono);">MAP</span>
+        <strong id="rmModalMap" style="color: var(--orange);">-</strong>
+      </div>
+      <div>
+        <span style="color: var(--muted); font-size: 11px; display: block; font-family: var(--font-mono);">ROOM STATUS</span>
+        <span id="rmModalStatusBadge">-</span>
+      </div>
+    </div>
+
+    <!-- Room Management Form -->
+    <form id="roomManagementForm" method="POST" action="">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="rm_room_id">Custom Room ID <span class="required">*</span></label>
+          <input type="text" id="rm_room_id" name="room_id" placeholder="e.g. 123456789">
+          <div class="form-helper">Manually created in Free Fire Custom Room.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="rm_room_password">Room Password <span class="required">*</span></label>
+          <input type="text" id="rm_room_password" name="room_password" placeholder="e.g. 458921">
+          <div class="form-helper">Custom room lobby password.</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="rm_release_date">Room Release Date</label>
+          <input type="date" id="rm_release_date" name="room_release_date">
+          <div class="form-helper">Date when room unlocks for teams.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="rm_release_time">Room Release Time</label>
+          <input type="time" id="rm_release_time" name="room_release_time">
+          <div class="form-helper">Exact time credentials unlock automatically.</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 22px;">
+        <button type="submit" name="action" value="SAVE" class="btn btn-primary" title="Save room details">
+          <i class="fa-solid fa-floppy-disk"></i> SAVE ROOM
+        </button>
+
+        <button type="submit" name="action" value="UPDATE" class="btn btn-outline" title="Update credentials & notify players if changed">
+          <i class="fa-solid fa-pen-to-square"></i> UPDATE ROOM
+        </button>
+
+        <button type="submit" name="action" value="HIDE" class="btn btn-outline-danger" title="Hide room credentials immediately from players">
+          <i class="fa-solid fa-eye-slash"></i> HIDE ROOM
+        </button>
+
+        <button type="submit" name="action" value="PUBLISH" class="btn btn-warning" style="background: var(--orange); color: #000; font-weight: 700; border: none;" title="Immediately publish room and notify registered squads">
+          <i class="fa-solid fa-bullhorn"></i> PUBLISH ROOM
+        </button>
+      </div>
+
+      <div style="text-align: center; margin-top: 16px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('roomManagementModal').close()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- SCHEDULE MATCH DIALOG -->
+  <dialog id="scheduleMatchModal" style="background: var(--surface); border: 1px solid var(--acid); border-radius: var(--radius-md); padding: 28px; color: var(--text); max-width: 600px; width: 90%; margin: auto; box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3><i class="fa-solid fa-plus-circle text-acid"></i> Schedule New Match</h3>
+      <button type="button" onclick="document.getElementById('scheduleMatchModal').close()" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.matches') }}">
+      <div class="form-group">
+        <label for="tournament_id">Tournament <span class="required">*</span></label>
+        <select id="tournament_id" name="tournament_id" required>
+          {% for t in tournaments %}
+            <option value="{{ t.id }}">{{ t.name }} ({{ t.status }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="match_number">Match # <span class="required">*</span></label>
+          <input type="number" id="match_number" name="match_number" min="1" value="1" required>
+        </div>
+
+        <div class="form-group">
+          <label for="map">Map</label>
+          <select id="map" name="map">
+            <option value="Bermuda">Bermuda</option>
+            <option value="Purgatory">Purgatory</option>
+            <option value="Kalahari">Kalahari</option>
+            <option value="Alpine">Alpine</option>
+            <option value="NexTerra">NexTerra</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="match_date">Match Date <span class="required">*</span></label>
+          <input type="date" id="match_date" name="date" required>
+        </div>
+
+        <div class="form-group">
+          <label for="match_time">Match Time <span class="required">*</span></label>
+          <input type="time" id="match_time" name="time" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="room_id">Custom Room ID</label>
+          <input type="text" id="room_id" name="room_id" placeholder="e.g. 84920194">
+        </div>
+
+        <div class="form-group">
+          <label for="room_password">Room Password</label>
+          <input type="text" id="room_password" name="room_password" placeholder="e.g. mickyesports">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="room_release_time">Unlock Room At</label>
+          <input type="datetime-local" id="room_release_time" name="room_release_time">
+          <div class="form-helper">Players cannot see credentials before this timestamp.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="status">Match Status</label>
+          <select id="status" name="status">
+            <option value="Upcoming" selected>Upcoming</option>
+            <option value="Live">Live</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1;">Save & Schedule</button>
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('scheduleMatchModal').close()">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- EDIT MATCH DIALOG -->
+  <dialog id="editMatchModal" style="background: var(--surface); border: 1px solid var(--acid); border-radius: var(--radius-md); padding: 28px; color: var(--text); max-width: 600px; width: 90%; margin: auto; box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3><i class="fa-solid fa-pen-to-square text-acid"></i> Edit Match & Room Access</h3>
+      <button type="button" onclick="document.getElementById('editMatchModal').close()" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;">&times;</button>
+    </div>
+
+    <form id="editMatchForm" method="POST" action="">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="edit_match_number">Match #</label>
+          <input type="number" id="edit_match_number" name="match_number" required>
+        </div>
+        <div class="form-group">
+          <label for="edit_map">Map</label>
+          <input type="text" id="edit_map" name="map" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="edit_date">Date</label>
+          <input type="date" id="edit_date" name="date" required>
+        </div>
+        <div class="form-group">
+          <label for="edit_time">Time</label>
+          <input type="time" id="edit_time" name="time" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="edit_room_id">Custom Room ID</label>
+          <input type="text" id="edit_room_id" name="room_id">
+        </div>
+        <div class="form-group">
+          <label for="edit_room_password">Room Password</label>
+          <input type="text" id="edit_room_password" name="room_password">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="edit_room_release_time">Room Release Time</label>
+          <input type="datetime-local" id="edit_room_release_time" name="room_release_time">
+        </div>
+        <div class="form-group">
+          <label for="edit_status">Status</label>
+          <select id="edit_status" name="status">
+            <option value="Upcoming">Upcoming</option>
+            <option value="Live">Live</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1;">Update Match</button>
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('editMatchModal').close()">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+</div>
+
+<script>
+function openEditMatchModal(id, num, date, time, map, roomId, roomPass, releaseTime, status) {
+  const modal = document.getElementById('editMatchModal');
+  const form = document.getElementById('editMatchForm');
+  form.action = "{{ url_for('admin.matches') }}".replace('matches', 'match/edit/' + id);
+
+  document.getElementById('edit_match_number').value = num;
+  document.getElementById('edit_date').value = date;
+  document.getElementById('edit_time').value = time;
+  document.getElementById('edit_map').value = map;
+  document.getElementById('edit_room_id').value = roomId || '';
+  document.getElementById('edit_room_password').value = roomPass || '';
+  document.getElementById('edit_room_release_time').value = releaseTime || '';
+  document.getElementById('edit_status').value = status;
+
+  modal.showModal();
+}
+
+function openRoomManagementModal(id, tournName, matchNum, date, time, map, roomId, roomPass, relDate, relTime, roomStatus, isPublished) {
+  const modal = document.getElementById('roomManagementModal');
+  const form = document.getElementById('roomManagementForm');
+  form.action = "{{ url_for('admin.matches') }}".replace('matches', 'match/room/' + id);
+
+  document.getElementById('rmModalTournament').textContent = tournName;
+  document.getElementById('rmModalMatchNum').textContent = 'Match #' + matchNum;
+  document.getElementById('rmModalDateTime').textContent = date + ' (' + time + ')';
+  document.getElementById('rmModalMap').textContent = map;
+
+  const statusBadge = document.getElementById('rmModalStatusBadge');
+  let badgeClass = 'badge-secondary';
+  let badgeText = roomStatus;
+  if (roomStatus === 'PUBLISHED') {
+    badgeClass = 'badge-success';
+    badgeText = 'ROOM PUBLISHED';
+  } else if (roomStatus === 'SCHEDULED') {
+    badgeClass = 'badge-warning';
+    badgeText = 'ROOM SCHEDULED';
+  } else if (roomStatus === 'LIVE') {
+    badgeClass = 'badge-danger';
+    badgeText = 'LIVE';
+  } else if (roomStatus === 'COMPLETED') {
+    badgeClass = 'badge-info';
+    badgeText = 'COMPLETED';
+  } else {
+    badgeClass = 'badge-secondary';
+    badgeText = 'ROOM NOT SET';
+  }
+  statusBadge.className = 'badge ' + badgeClass;
+  statusBadge.textContent = badgeText;
+
+  document.getElementById('rm_room_id').value = roomId || '';
+  document.getElementById('rm_room_password').value = roomPass || '';
+  document.getElementById('rm_release_date').value = relDate || '';
+  document.getElementById('rm_release_time').value = relTime || '';
+
+  modal.showModal();
+}
+</script>
+{% endblock %}

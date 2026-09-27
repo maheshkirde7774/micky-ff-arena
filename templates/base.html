@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MICKY FF ARENA - Join • Compete • Win{% endblock %}</title>
+  <meta name="description" content="Professional Free Fire tournament management platform. Join competitive esports squads, track matches, room IDs, and live leaderboards.">
+  
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom Cyber Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="{{ url_for('main.index') }}" class="brand">
+        <div class="brand-logo-icon">M</div>
+        <div>
+          <div class="brand-name">MICKY <span>ARENA</span></div>
+          <span class="brand-tag">JOIN • COMPETE • WIN</span>
+        </div>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="{{ url_for('main.index') }}" class="nav-link"><i class="fa-solid fa-house"></i> Home</a></li>
+        <li><a href="{{ url_for('main.tournaments') }}" class="nav-link"><i class="fa-solid fa-trophy"></i> Tournaments</a></li>
+        <li><a href="{{ url_for('main.leaderboard') }}" class="nav-link"><i class="fa-solid fa-ranking-star"></i> Leaderboard</a></li>
+        
+        {% if current_user.is_authenticated %}
+          <li><a href="{{ url_for('main.dashboard') }}" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
+          <li><a href="{{ url_for('main.my_tournaments') }}" class="nav-link"><i class="fa-solid fa-gamepad"></i> My Matches</a></li>
+          <li><a href="{{ url_for('main.support') }}" class="nav-link"><i class="fa-solid fa-headset"></i> Support</a></li>
+          {% if current_user.is_admin %}
+            <li><a href="{{ url_for('admin.dashboard') }}" class="nav-link admin-link"><i class="fa-solid fa-shield-halved"></i> Admin Panel</a></li>
+          {% endif %}
+        {% endif %}
+      </ul>
+
+      <div class="nav-actions">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('main.notifications') }}" class="notif-btn" title="Notifications">
+            <i class="fa-solid fa-bell"></i>
+            {% if unread_notifications_count > 0 %}
+              <span class="notif-badge">{{ unread_notifications_count }}</span>
+            {% endif %}
+          </a>
+
+          <a href="{{ url_for('main.profile') }}" class="btn btn-secondary btn-sm" title="View Profile">
+            <i class="fa-solid fa-user-astronaut"></i> {{ current_user.name.split(' ')[0] }}
+          </a>
+
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-sm" title="Sign out">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </a>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-sm">Login</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Register</a>
+        {% endif %}
+
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle navigation">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            <div>
+              {% if category == 'success' %}
+                <i class="fa-solid fa-circle-check"></i>
+              {% elif category == 'danger' %}
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              {% elif category == 'warning' %}
+                <i class="fa-solid fa-circle-exclamation"></i>
+              {% else %}
+                <i class="fa-solid fa-circle-info"></i>
+              {% endif %}
+              {{ message }}
+            </div>
+            <button class="close-btn" aria-label="Dismiss">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Body Content -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="brand" style="margin-bottom: 16px;">
+            <div class="brand-logo-icon">M</div>
+            <div>
+              <div class="brand-name">MICKY <span>ARENA</span></div>
+              <span class="brand-tag">JOIN • COMPETE • WIN</span>
+            </div>
+          </div>
+          <p style="color: var(--muted); font-size: 14px; max-width: 320px; margin-bottom: 20px;">
+            The next-generation competitive Free Fire tournament hub. Organized squad brackets, automated scoring, real-time room credentials, and verified leaderboards.
+          </p>
+          <div style="display: flex; gap: 14px; font-size: 18px;">
+            <a href="#" style="color: var(--text-dim);"><i class="fa-brands fa-discord"></i></a>
+            <a href="#" style="color: var(--text-dim);"><i class="fa-brands fa-youtube"></i></a>
+            <a href="#" style="color: var(--text-dim);"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" style="color: var(--text-dim);"><i class="fa-brands fa-telegram"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li><a href="{{ url_for('main.tournaments') }}">Tournaments</a></li>
+            <li><a href="{{ url_for('main.leaderboard') }}">Leaderboard</a></li>
+            <li><a href="{{ url_for('main.dashboard') }}">Player Dashboard</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Fair Play & Rules</h4>
+          <ul class="footer-links">
+            <li><a href="#rules">Tournament Guidelines</a></li>
+            <li><a href="#scoring">Point System</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="{{ url_for('main.support') }}">Submit Ticket</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Arena Support</h4>
+          <p style="color: var(--muted); font-size: 13px; margin-bottom: 12px;">Need help with match rooms or scores?</p>
+          <a href="{{ url_for('main.support') }}" class="btn btn-outline btn-sm" style="width: 100%;">
+            <i class="fa-solid fa-headset"></i> Contact Support
+          </a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 Micky FF Arena. All rights reserved. Free Fire is a trademark of Garena.</div>
+        <div style="display: flex; gap: 16px;">
+          <span>Esports Grade Tournament Platform</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Custom Client JS -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

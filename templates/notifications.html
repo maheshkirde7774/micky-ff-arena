@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px;">
+  <div class="section-header">
+    <div class="section-title">
+      <i class="fa-solid fa-bell text-acid"></i>
+      <div>
+        <small>COMMUNICATIONS & MATCH ALERTS</small>
+        <h2>Player Notifications</h2>
+      </div>
+    </div>
+
+    {% if notifications %}
+      <form method="POST" action="{{ url_for('main.mark_all_notifications_read') }}">
+        <button type="submit" class="btn btn-outline btn-sm">
+          <i class="fa-solid fa-check-double"></i> Mark All as Read
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if notifications %}
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      {% for n in notifications %}
+        <div class="panel" style="padding: 18px 20px; border-left: 4px solid {% if n.is_read %}var(--border){% else %}var(--acid){% endif %}; background: {% if n.is_read %}var(--surface){% else %}var(--surface-2){% endif %};">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 6px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              {% if not n.is_read %}
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--acid); display: inline-block;"></span>
+              {% endif %}
+              <h4 style="font-size: 1.15rem; color: {% if n.is_read %}var(--text-dim){% else %}var(--text){% endif %};">{{ n.title }}</h4>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <small style="color: var(--muted); font-size: 12px;">
+                {{ n.created_at.strftime('%b %d, %Y - %I:%M %p') }}
+              </small>
+              {% if not n.is_read %}
+                <form method="POST" action="{{ url_for('main.mark_notification_read', notif_id=n.id) }}">
+                  <button type="submit" class="btn btn-outline btn-sm" style="padding: 3px 8px; font-size: 11px;" title="Mark as Read">
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+
+          <p style="color: var(--text-dim); font-size: 14px; margin-left: {% if not n.is_read %}18px{% else %}0{% endif %};">
+            {{ n.message }}
+          </p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="panel" style="text-align: center; padding: 48px;">
+      <i class="fa-solid fa-bell-slash" style="font-size: 3rem; color: var(--muted); margin-bottom: 14px;"></i>
+      <h3>No Notifications</h3>
+      <p style="color: var(--muted);">You have no pending tournament announcements or match alerts.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

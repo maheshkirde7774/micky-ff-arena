@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Squad - {{ tournament.name }} - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px;">
+  <div class="section-header">
+    <div class="section-title">
+      <i class="fa-solid fa-users-viewfinder text-acid"></i>
+      <div>
+        <small>OFFICIAL SQUAD ROSTER</small>
+        <h2>Squad Registration</h2>
+      </div>
+    </div>
+    <span class="badge badge-info">{{ tournament.game_mode }} Mode</span>
+  </div>
+
+  <div class="panel">
+    <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <small style="color: var(--muted); font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;">SELECTED TOURNAMENT</small>
+        <h3 style="margin-top: 2px;">{{ tournament.name }}</h3>
+        <span style="color: var(--muted); font-size: 13px;">Date: {{ tournament.date }} at {{ tournament.time }} • Map: {{ tournament.map }}</span>
+      </div>
+      <div>
+        <span class="badge badge-success">SLOTS: {{ tournament.registered_teams_count }} / {{ tournament.max_teams }}</span>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('main.team_register', tournament_id=tournament.id) }}">
+      
+      <!-- Team Name -->
+      <div class="form-group">
+        <label for="team_name"><i class="fa-solid fa-shield text-acid"></i> Team / Squad Name <span class="required">*</span></label>
+        <input type="text" id="team_name" name="team_name" placeholder="e.g. TOTAL GAMING ESPORTS" required maxlength="100">
+      </div>
+
+      <!-- Captain Details (Auto-filled) -->
+      <div style="border-top: 1px solid var(--border); padding-top: 18px; margin-top: 24px; margin-bottom: 18px;">
+        <h4 style="color: var(--acid); margin-bottom: 12px;"><i class="fa-solid fa-crown text-gold"></i> Captain (You)</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Captain Name</label>
+            <input type="text" value="{{ current_user.name }}" disabled style="opacity: 0.8; cursor: not-allowed;">
+          </div>
+          <div class="form-group">
+            <label>Captain Free Fire UID</label>
+            <input type="text" value="{{ current_user.free_fire_uid or 'Not set (Update profile)' }}" disabled style="opacity: 0.8; cursor: not-allowed;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Player 2 -->
+      <div style="border-top: 1px solid var(--border); padding-top: 18px; margin-bottom: 18px;">
+        <h4 style="color: var(--text-dim); margin-bottom: 12px;"><i class="fa-solid fa-user-ninja"></i> Player 2 <span class="required">*</span></h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="player2_name">Player 2 Name <span class="required">*</span></label>
+            <input type="text" id="player2_name" name="player2_name" placeholder="Player 2 Name" required>
+          </div>
+          <div class="form-group">
+            <label for="player2_uid">Player 2 Free Fire UID <span class="required">*</span></label>
+            <input type="text" id="player2_uid" name="player2_uid" placeholder="UID: 849302184" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player 3 -->
+      <div style="border-top: 1px solid var(--border); padding-top: 18px; margin-bottom: 18px;">
+        <h4 style="color: var(--text-dim); margin-bottom: 12px;"><i class="fa-solid fa-user-ninja"></i> Player 3 <span class="required">*</span></h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="player3_name">Player 3 Name <span class="required">*</span></label>
+            <input type="text" id="player3_name" name="player3_name" placeholder="Player 3 Name" required>
+          </div>
+          <div class="form-group">
+            <label for="player3_uid">Player 3 Free Fire UID <span class="required">*</span></label>
+            <input type="text" id="player3_uid" name="player3_uid" placeholder="UID: 958473829" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player 4 -->
+      <div style="border-top: 1px solid var(--border); padding-top: 18px; margin-bottom: 18px;">
+        <h4 style="color: var(--text-dim); margin-bottom: 12px;"><i class="fa-solid fa-user-ninja"></i> Player 4 <span class="required">*</span></h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="player4_name">Player 4 Name <span class="required">*</span></label>
+            <input type="text" id="player4_name" name="player4_name" placeholder="Player 4 Name" required>
+          </div>
+          <div class="form-group">
+            <label for="player4_uid">Player 4 Free Fire UID <span class="required">*</span></label>
+            <input type="text" id="player4_uid" name="player4_uid" placeholder="UID: 473829104" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- Optional Substitute -->
+      <div style="border-top: 1px solid var(--border); padding-top: 18px; margin-bottom: 24px;">
+        <h4 style="color: var(--muted); margin-bottom: 12px;"><i class="fa-solid fa-user-clock"></i> Substitute Player (Optional)</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="substitute_name">Substitute Name</label>
+            <input type="text" id="substitute_name" name="substitute_name" placeholder="Optional sub name">
+          </div>
+          <div class="form-group">
+            <label for="substitute_uid">Substitute Free Fire UID</label>
+            <input type="text" id="substitute_uid" name="substitute_uid" placeholder="Optional sub UID">
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+        <i class="fa-solid fa-check"></i> Submit Squad Registration & Generate Team ID
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

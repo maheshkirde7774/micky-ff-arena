@@ -1,0 +1,120 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block admin_content %}
+<div>
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+    <div>
+      <span class="badge badge-warning" style="margin-bottom: 6px;">SQUAD OPERATIONS</span>
+      <h1>TEAMS MANAGEMENT</h1>
+      <p style="color: var(--muted); font-size: 14px;">Review rosters, approve squads for custom room lobbies, and manage registrations.</p>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="panel" style="padding: 16px; margin-bottom: 20px;">
+    <form method="GET" action="{{ url_for('admin.teams') }}" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 250px;">
+        <input type="text" name="search" value="{{ search or '' }}" placeholder="Search by Team ID (e.g. MFF-2026-001), Team Name, or FF UID...">
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-magnifying-glass"></i> Search
+      </button>
+      {% if search %}
+        <a href="{{ url_for('admin.teams') }}" class="btn btn-outline btn-sm">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Teams Table -->
+  <div class="panel" style="padding: 0; overflow: hidden;">
+    <div class="table-responsive">
+      <table class="cyber-table">
+        <thead>
+          <tr>
+            <th>Team ID</th>
+            <th>Team Name</th>
+            <th>Captain & UID</th>
+            <th>Tournament</th>
+            <th>Squad Members</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in teams %}
+            <tr>
+              <td>
+                <strong style="font-family: var(--font-mono); color: var(--acid);">{{ t.team_id }}</strong>
+              </td>
+              <td>
+                <strong style="font-size: 1.05rem;">{{ t.team_name }}</strong>
+              </td>
+              <td>
+                <strong>{{ t.captain.name }}</strong><br>
+                <small style="color: var(--muted); font-family: var(--font-mono);">UID: {{ t.captain.free_fire_uid or 'N/A' }}</small>
+              </td>
+              <td>
+                {{ t.tournament.name }}
+              </td>
+              <td>
+                <small style="color: var(--text-dim); display: block; line-height: 1.4;">
+                  <strong>P2:</strong> {{ t.player2_name }} ({{ t.player2_uid }})<br>
+                  <strong>P3:</strong> {{ t.player3_name }} ({{ t.player3_uid }})<br>
+                  <strong>P4:</strong> {{ t.player4_name }} ({{ t.player4_uid }})
+                  {% if t.substitute_name %}
+                    <br><strong>Sub:</strong> {{ t.substitute_name }} ({{ t.substitute_uid }})
+                  {% endif %}
+                </small>
+              </td>
+              <td>
+                {% if t.status == 'APPROVED' %}
+                  <span class="badge badge-success">APPROVED</span>
+                {% elif t.status == 'PENDING' %}
+                  <span class="badge badge-warning">PENDING</span>
+                {% else %}
+                  <span class="badge badge-danger">REJECTED</span>
+                {% endif %}
+              </td>
+              <td style="color: var(--muted); font-size: 12px;">
+                {{ t.created_at.strftime('%Y-%m-%d') }}
+              </td>
+              <td style="text-align: right;">
+                <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                  {% if t.status != 'APPROVED' %}
+                    <form method="POST" action="{{ url_for('admin.approve_team', team_id=t.id) }}">
+                      <button type="submit" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 11px;" title="Approve Team">
+                        <i class="fa-solid fa-check"></i> Approve
+                      </button>
+                    </form>
+                  {% endif %}
+
+                  {% if t.status != 'REJECTED' %}
+                    <form method="POST" action="{{ url_for('admin.reject_team', team_id=t.id) }}">
+                      <button type="submit" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11px; color: var(--orange);" title="Reject Team">
+                        <i class="fa-solid fa-ban"></i> Reject
+                      </button>
+                    </form>
+                  {% endif %}
+
+                  <form method="POST" action="{{ url_for('admin.delete_team', team_id=t.id) }}" onsubmit="return confirm('Permanently remove this team from the tournament?');">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" style="padding: 4px 8px; font-size: 11px;" title="Delete Team">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 36px; color: var(--muted);">
+                No teams registered matching your search criteria.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

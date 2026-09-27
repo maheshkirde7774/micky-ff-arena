@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Player Profile - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+  <div class="section-header">
+    <div class="section-title">
+      <i class="fa-solid fa-id-badge text-acid"></i>
+      <div>
+        <small>IDENTITY & COMBAT RECORD</small>
+        <h2>Player Profile</h2>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start;">
+    <!-- Profile Card Preview -->
+    <div class="panel" style="text-align: center;">
+      <div style="width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--acid); margin: 0 auto 16px; overflow: hidden; background: var(--surface-2); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px var(--acid-glow);">
+        {% if user.profile_image and user.profile_image != 'default_avatar.png' %}
+          <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+        {% else %}
+          <i class="fa-solid fa-user-ninja" style="font-size: 3.5rem; color: var(--acid);"></i>
+        {% endif %}
+      </div>
+
+      <h3 style="margin-bottom: 4px;">{{ user.name }}</h3>
+      <div style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--orange); font-weight: 700; margin-bottom: 12px;">
+        IGN: {{ user.in_game_name or 'Unregistered IGN' }}
+      </div>
+      <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 18px; font-size: 13px; font-family: var(--font-mono);">
+        FF UID: <strong class="text-acid">{{ user.free_fire_uid or 'N/A' }}</strong>
+      </div>
+      
+      <div style="border-top: 1px solid var(--border); padding-top: 14px; text-align: left;">
+        <small style="color: var(--muted); font-size: 11px; text-transform: uppercase;">VERIFIED COMBAT STATISTICS (SYSTEM COMPUTED)</small>
+        
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">
+          <span>Tournaments:</span>
+          <strong>{{ user.tournaments_played }}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">
+          <span>Matches:</span>
+          <strong>{{ user.matches_played }}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">
+          <span>Booyahs (Wins):</span>
+          <strong class="text-gold">{{ user.wins }}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px;">
+          <span>Total Kills:</span>
+          <strong class="text-orange">{{ user.total_kills }}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px;">
+          <span>Total Points:</span>
+          <strong class="text-acid">{{ user.total_points }} pts</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Form Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3><i class="fa-solid fa-pen-to-square text-cyan"></i> Edit Account Details</h3>
+      </div>
+
+      <form method="POST" action="{{ url_for('main.profile') }}" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="name">Full Name <span class="required">*</span></label>
+          <input type="text" id="name" name="name" value="{{ user.name }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address (Read-only)</label>
+          <input type="email" id="email" value="{{ user.email }}" disabled style="opacity: 0.6; cursor: not-allowed;">
+          <div class="form-helper">Email cannot be changed directly. Contact support for assistance.</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="free_fire_uid">Free Fire UID</label>
+            <input type="text" id="free_fire_uid" name="free_fire_uid" value="{{ user.free_fire_uid or '' }}" placeholder="e.g. 248910342">
+          </div>
+
+          <div class="form-group">
+            <label for="in_game_name">In-Game Name (IGN)</label>
+            <input type="text" id="in_game_name" name="in_game_name" value="{{ user.in_game_name or '' }}" placeholder="e.g. SHADOW_SNIPER">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="profile_image"><i class="fa-solid fa-image"></i> Change Profile Picture</label>
+          <input type="file" id="profile_image" name="profile_image" accept="image/*">
+          <div class="form-helper">Recommended: Square PNG/JPEG image under 4MB.</div>
+        </div>
+
+        <div style="margin-top: 28px;">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-floppy-disk"></i> Save Profile Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

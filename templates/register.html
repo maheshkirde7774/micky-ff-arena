@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Player Account - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; padding-top: 40px; padding-bottom: 60px;">
+  <div class="panel">
+    <div style="text-align: center; margin-bottom: 28px;">
+      <span class="badge badge-info" style="margin-bottom: 12px;">SQUAD REGISTRATION OPEN</span>
+      <h2 style="margin-bottom: 8px;">CREATE PLAYER ACCOUNT</h2>
+      <p style="color: var(--muted); font-size: 14px;">Join Micky FF Arena to create squads, enter tournaments & win cash prizes</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.register') }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name"><i class="fa-solid fa-user"></i> Full Name <span class="required">*</span></label>
+          <input type="text" id="name" name="name" value="{{ name or '' }}" placeholder="Aarav Sharma" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email"><i class="fa-solid fa-envelope"></i> Email Address <span class="required">*</span></label>
+          <input type="email" id="email" name="email" value="{{ email or '' }}" placeholder="aarav@gmail.com" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="free_fire_uid"><i class="fa-solid fa-id-card"></i> Free Fire UID <span class="required">*</span></label>
+          <input type="text" id="free_fire_uid" name="free_fire_uid" value="{{ free_fire_uid or '' }}" placeholder="e.g. 248910342" required>
+          <div class="form-helper">Your 8-10 digit in-game UID</div>
+        </div>
+
+        <div class="form-group">
+          <label for="in_game_name"><i class="fa-solid fa-crosshairs"></i> In-Game Name (IGN) <span class="required">*</span></label>
+          <input type="text" id="in_game_name" name="in_game_name" value="{{ in_game_name or '' }}" placeholder="e.g. SHADOW_SNIPER" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="password"><i class="fa-solid fa-lock"></i> Password <span class="required">*</span></label>
+          <input type="password" id="password" name="password" minlength="6" placeholder="At least 6 characters" required>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password"><i class="fa-solid fa-lock"></i> Confirm Password <span class="required">*</span></label>
+          <input type="password" id="confirm_password" name="confirm_password" minlength="6" placeholder="Repeat password" required>
+        </div>
+      </div>
+
+      <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 24px; font-size: 13px; color: var(--text-dim);">
+        <i class="fa-solid fa-shield-halved text-acid" style="margin-right: 6px;"></i>
+        All passwords are protected with cryptographic salt & hashing. Never share your password with anyone.
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+        <i class="fa-solid fa-user-plus"></i> Complete Registration
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 18px; font-size: 14px; color: var(--muted);">
+      Already have an account? 
+      <a href="{{ url_for('auth.login') }}" style="color: var(--acid); font-weight: 700; margin-left: 4px;">
+        Sign In here <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

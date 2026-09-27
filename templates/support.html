@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Player Support & Complaints - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="section-header">
+    <div class="section-title">
+      <i class="fa-solid fa-headset text-acid"></i>
+      <div>
+        <small>ASSISTANCE & DISPUTE RESOLUTION</small>
+        <h2>Player Support & Complaints</h2>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 28px; align-items: start;">
+    
+    <!-- Submit Ticket Form -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3><i class="fa-solid fa-paper-plane text-cyan"></i> Submit Support Ticket</h3>
+      </div>
+
+      <form method="POST" action="{{ url_for('main.support') }}">
+        <div class="form-group">
+          <label for="category"><i class="fa-solid fa-tags"></i> Complaint Category <span class="required">*</span></label>
+          <select id="category" name="category" required>
+            <option value="Match">Match / Room Issue</option>
+            <option value="Result">Result / Score Dispute</option>
+            <option value="Registration">Squad Registration</option>
+            <option value="Payment">Payment / Entry Fee</option>
+            <option value="Technical">Technical Bug</option>
+            <option value="Other">Other Query</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="subject"><i class="fa-solid fa-heading"></i> Subject <span class="required">*</span></label>
+          <input type="text" id="subject" name="subject" placeholder="e.g. Score not updated for Match #2" required maxlength="150">
+        </div>
+
+        <div class="form-group">
+          <label for="message"><i class="fa-solid fa-comment-dots"></i> Detailed Description <span class="required">*</span></label>
+          <textarea id="message" name="message" rows="5" placeholder="Explain the dispute or problem clearly. Include Team ID or Match number if applicable." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+          <i class="fa-solid fa-paper-plane"></i> Send Ticket to Admin
+        </button>
+      </form>
+    </div>
+
+    <!-- User's Existing Complaints -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3><i class="fa-solid fa-inbox text-orange"></i> My Support History</h3>
+        <span class="badge badge-info">{{ complaints|length }} Tickets</span>
+      </div>
+
+      {% if complaints %}
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          {% for c in complaints %}
+            <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px;">
+                <div>
+                  <span class="badge badge-info" style="font-size: 11px; margin-bottom: 4px;">{{ c.category }}</span>
+                  <h4 style="font-size: 1.1rem; margin-top: 4px;">{{ c.subject }}</h4>
+                </div>
+                <div>
+                  {% if c.status == 'OPEN' %}
+                    <span class="badge badge-warning">OPEN</span>
+                  {% elif c.status == 'IN PROGRESS' %}
+                    <span class="badge badge-info">IN PROGRESS</span>
+                  {% else %}
+                    <span class="badge badge-success">RESOLVED</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 12px; background: var(--surface-3); padding: 10px; border-radius: var(--radius-sm);">
+                {{ c.message }}
+              </p>
+
+              {% if c.admin_reply %}
+                <div style="background: rgba(210, 250, 81, 0.08); border-left: 3px solid var(--acid); padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-top: 10px;">
+                  <strong style="color: var(--acid); font-size: 12px; display: block; margin-bottom: 4px;">
+                    <i class="fa-solid fa-shield-halved"></i> Admin Response:
+                  </strong>
+                  <div style="color: var(--text); font-size: 13px;">{{ c.admin_reply }}</div>
+                </div>
+              {% else %}
+                <small style="color: var(--muted); font-size: 12px; font-style: italic;">
+                  <i class="fa-solid fa-clock"></i> Awaiting admin review...
+                </small>
+              {% endif %}
+
+              <div style="margin-top: 10px; text-align: right; color: var(--muted); font-size: 11px;">
+                Submitted on {{ c.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 40px; color: var(--muted);">
+          <i class="fa-solid fa-clipboard-check" style="font-size: 2.5rem; margin-bottom: 12px; display: block;"></i>
+          <p>You have no active or previous support tickets.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

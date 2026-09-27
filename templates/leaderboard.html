@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Leaderboard - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Header with Tournament Selector -->
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+    <div class="section-title">
+      <i class="fa-solid fa-ranking-star text-acid"></i>
+      <div>
+        <small>OFFICIAL ESPORTS STANDINGS</small>
+        <h2>Live Leaderboard</h2>
+      </div>
+    </div>
+
+    <!-- Tournament Selector -->
+    <div style="min-width: 280px;">
+      <label for="tournSelect" style="margin-bottom: 6px;"><i class="fa-solid fa-trophy"></i> Select Tournament:</label>
+      <select id="tournSelect" onchange="if (this.value) window.location.href = '{{ url_for('main.leaderboard') }}/' + this.value;">
+        {% for t in tournaments %}
+          <option value="{{ t.id }}" {% if selected_tournament and selected_tournament.id == t.id %}selected{% endif %}>
+            {{ t.name }} ({{ t.status }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  {% if selected_tournament %}
+    <!-- Summary Counter Strip -->
+    <div class="dash-stat-grid" style="margin-bottom: 30px;">
+      <div class="dash-stat-box primary">
+        <div class="box-label"><i class="fa-solid fa-users"></i> Total Teams</div>
+        <div class="box-value">{{ total_teams }}</div>
+        <small style="color: var(--muted);">Approved in Tournament</small>
+      </div>
+
+      <div class="dash-stat-box orange">
+        <div class="box-label"><i class="fa-solid fa-crosshairs"></i> Total Kills</div>
+        <div class="box-value text-orange">{{ total_kills }}</div>
+        <small style="color: var(--muted);">Confirmed Match Frags</small>
+      </div>
+
+      <div class="dash-stat-box cyan">
+        <div class="box-label"><i class="fa-solid fa-gamepad"></i> Completed Matches</div>
+        <div class="box-value">{{ total_matches }}</div>
+        <small style="color: var(--muted);">Scored & Verified</small>
+      </div>
+
+      <div class="dash-stat-box gold">
+        <div class="box-label"><i class="fa-solid fa-sack-dollar"></i> Prize Pool</div>
+        <div class="box-value text-gold">₹{{ selected_tournament.prize_pool|int }}</div>
+        <small style="color: var(--muted);">{{ selected_tournament.game_mode }} Format</small>
+      </div>
+    </div>
+
+    <!-- Podium Standings (Top 3 Cards on Desktop) -->
+    {% if leaderboard|length >= 3 %}
+      <div style="display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 16px; margin-bottom: 32px; align-items: end;">
+        
+        <!-- 2nd Place -->
+        <div class="panel podium-2" style="text-align: center; padding: 20px 16px;">
+          <div class="rank-badge rank-2" style="margin: 0 auto 10px; width: 44px; height: 44px; font-size: 1.4rem;">2</div>
+          <h4 style="font-size: 1.3rem; margin-bottom: 4px;">{{ leaderboard[1].team.team_name }}</h4>
+          <span style="font-family: var(--font-mono); font-size: 12px; color: var(--muted);">{{ leaderboard[1].team.team_id }}</span>
+          <div style="margin-top: 12px; font-size: 1.4rem; font-family: var(--font-display); font-weight: 800; color: var(--silver);">
+            {{ leaderboard[1].total_points }} PTS
+          </div>
+          <small style="color: var(--muted); font-size: 12px;">{{ leaderboard[1].kills }} Kills • {{ leaderboard[1].matches }} Matches</small>
+        </div>
+
+        <!-- 1st Place (Champion) -->
+        <div class="panel podium-1" style="text-align: center; padding: 28px 16px; box-shadow: 0 0 25px rgba(255, 209, 102, 0.2);">
+          <i class="fa-solid fa-crown text-gold" style="font-size: 2rem; margin-bottom: 8px;"></i>
+          <div class="rank-badge rank-1" style="margin: 0 auto 10px; width: 50px; height: 50px; font-size: 1.6rem;">1</div>
+          <h3 style="font-size: 1.6rem; margin-bottom: 4px; color: var(--gold);">{{ leaderboard[0].team.team_name }}</h3>
+          <span style="font-family: var(--font-mono); font-size: 12px; color: var(--acid);">{{ leaderboard[0].team.team_id }}</span>
+          <div style="margin-top: 12px; font-size: 2rem; font-family: var(--font-display); font-weight: 900; color: var(--acid);">
+            {{ leaderboard[0].total_points }} PTS
+          </div>
+          <small style="color: var(--text-dim); font-size: 13px;">{{ leaderboard[0].kills }} Kills • {{ leaderboard[0].matches }} Matches</small>
+        </div>
+
+        <!-- 3rd Place -->
+        <div class="panel podium-3" style="text-align: center; padding: 20px 16px;">
+          <div class="rank-badge rank-3" style="margin: 0 auto 10px; width: 44px; height: 44px; font-size: 1.4rem;">3</div>
+          <h4 style="font-size: 1.3rem; margin-bottom: 4px;">{{ leaderboard[2].team.team_name }}</h4>
+          <span style="font-family: var(--font-mono); font-size: 12px; color: var(--muted);">{{ leaderboard[2].team.team_id }}</span>
+          <div style="margin-top: 12px; font-size: 1.4rem; font-family: var(--font-display); font-weight: 800; color: var(--bronze);">
+            {{ leaderboard[2].total_points }} PTS
+          </div>
+          <small style="color: var(--muted); font-size: 12px;">{{ leaderboard[2].kills }} Kills • {{ leaderboard[2].matches }} Matches</small>
+        </div>
+
+      </div>
+    {% endif %}
+
+    <!-- Full Leaderboard Table -->
+    <div class="panel" style="padding: 0; overflow: hidden;">
+      <div class="table-responsive">
+        <table class="cyber-table">
+          <thead>
+            <tr>
+              <th style="width: 70px;">Rank</th>
+              <th>Team ID</th>
+              <th>Team Name</th>
+              <th>Captain</th>
+              <th style="text-align: center;">Matches</th>
+              <th style="text-align: center;">Kills</th>
+              <th style="text-align: center;">Placement Pts</th>
+              <th style="text-align: center;">Kill Pts</th>
+              <th style="text-align: right;">Total Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in leaderboard %}
+              <tr class="{% if row.rank == 1 %}podium-1{% elif row.rank == 2 %}podium-2{% elif row.rank == 3 %}podium-3{% endif %}">
+                <td>
+                  <span class="rank-badge {% if row.rank == 1 %}rank-1{% elif row.rank == 2 %}rank-2{% elif row.rank == 3 %}rank-3{% else %}rank-other{% endif %}">
+                    {{ row.rank }}
+                  </span>
+                </td>
+                <td>
+                  <strong style="font-family: var(--font-mono); color: var(--acid);">{{ row.team.team_id }}</strong>
+                </td>
+                <td>
+                  <strong style="font-size: 1.05rem;">{{ row.team.team_name }}</strong>
+                </td>
+                <td>
+                  <span style="color: var(--muted);">{{ row.team.captain.name }}</span>
+                </td>
+                <td style="text-align: center;">{{ row.matches }}</td>
+                <td style="text-align: center;">
+                  <strong class="text-orange">{{ row.kills }}</strong>
+                </td>
+                <td style="text-align: center;">{{ row.placement_points }}</td>
+                <td style="text-align: center;">{{ row.kill_points }}</td>
+                <td style="text-align: right;">
+                  <strong class="text-acid" style="font-size: 1.3rem; font-family: var(--font-display);">
+                    {{ row.total_points }}
+                  </strong>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="9" style="text-align: center; padding: 36px; color: var(--muted);">
+                  No verified match scores submitted for this tournament yet.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  {% else %}
+    <div class="panel" style="text-align: center; padding: 48px;">
+      <p style="color: var(--muted);">No tournaments available to display.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

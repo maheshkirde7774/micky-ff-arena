@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ tournament.name }} - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Banner Header -->
+  <div style="position: relative; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); margin-bottom: 32px; background: var(--surface);">
+    <div style="height: 260px; width: 100%; position: relative;">
+      <img src="{{ tournament.banner or 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80' }}" alt="{{ tournament.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+      <div style="position: absolute; inset: 0; background: linear-gradient(to top, var(--surface) 10%, rgba(18, 21, 16, 0.4) 60%, rgba(18, 21, 16, 0.8) 100%);"></div>
+      
+      <div style="position: absolute; top: 20px; left: 24px; display: flex; gap: 10px;">
+        {% if tournament.status == 'REGISTRATION OPEN' %}
+          <span class="tour-status-badge status-open">REGISTRATION OPEN</span>
+        {% elif tournament.status == 'LIVE' %}
+          <span class="tour-status-badge status-live">● LIVE NOW</span>
+        {% elif tournament.status == 'FULL' %}
+          <span class="tour-status-badge status-full">TOURNAMENT FULL</span>
+        {% elif tournament.status == 'COMPLETED' %}
+          <span class="tour-status-badge status-completed">COMPLETED</span>
+        {% else %}
+          <span class="tour-status-badge status-upcoming">UPCOMING</span>
+        {% endif %}
+
+        <span class="tour-map-badge"><i class="fa-solid fa-map-location-dot"></i> {{ tournament.map }}</span>
+      </div>
+    </div>
+
+    <!-- Details Meta Header -->
+    <div style="padding: 24px; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+      <div>
+        <h1 style="font-size: 2.4rem; margin-bottom: 8px;">{{ tournament.name }}</h1>
+        <p style="color: var(--text-dim); max-width: 750px; font-size: 15px;">
+          {{ tournament.description or 'Official Free Fire competitive squad bracket.' }}
+        </p>
+      </div>
+
+      <div>
+        {% if user_team %}
+          <div style="background: rgba(210, 250, 81, 0.1); border: 1px solid var(--acid); padding: 12px 20px; border-radius: var(--radius-sm); text-align: center;">
+            <small style="color: var(--acid); font-family: var(--font-mono); font-weight: 700; display: block;">YOU ARE REGISTERED</small>
+            <strong style="font-size: 1.1rem; color: var(--text);">Team ID: {{ user_team.team_id }}</strong>
+          </div>
+        {% elif tournament.status == 'FULL' %}
+          <button class="btn btn-secondary btn-lg" disabled style="opacity: 0.6; cursor: not-allowed;">
+            <i class="fa-solid fa-lock"></i> TOURNAMENT FULL
+          </button>
+        {% elif tournament.status not in ['REGISTRATION OPEN', 'UPCOMING'] %}
+          <button class="btn btn-secondary btn-lg" disabled style="opacity: 0.6; cursor: not-allowed;">
+            <i class="fa-solid fa-lock"></i> REGISTRATION CLOSED
+          </button>
+        {% else %}
+          <a href="{{ url_for('main.team_register', tournament_id=tournament.id) }}" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-user-plus"></i> Register Team
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Metrics Strip -->
+  <div class="dash-stat-grid" style="margin-bottom: 32px;">
+    <div class="dash-stat-box primary">
+      <div class="box-label"><i class="fa-solid fa-trophy"></i> Total Prize Pool</div>
+      <div class="box-value text-acid">₹{{ tournament.prize_pool|int }}</div>
+      <small style="color: var(--muted);">Direct Cash Prize</small>
+    </div>
+
+    <div class="dash-stat-box orange">
+      <div class="box-label"><i class="fa-solid fa-ticket"></i> Entry Fee</div>
+      <div class="box-value text-orange">{% if tournament.entry_fee == 0 %}FREE{% else %}₹{{ tournament.entry_fee|int }}{% endif %}</div>
+      <small style="color: var(--muted);">Per Squad</small>
+    </div>
+
+    <div class="dash-stat-box cyan">
+      <div class="box-label"><i class="fa-solid fa-calendar-check"></i> Match Schedule</div>
+      <div class="box-value" style="font-size: 1.6rem; margin-top: 14px;">{{ tournament.date }}</div>
+      <small style="color: var(--muted);">Launch Time: {{ tournament.time }}</small>
+    </div>
+
+    <div class="dash-stat-box gold">
+      <div class="box-label"><i class="fa-solid fa-users"></i> Registered Squads</div>
+      <div class="box-value">{{ tournament.registered_teams_count }} / {{ tournament.max_teams }}</div>
+      <small style="color: var(--muted);">{{ tournament.game_mode }} Format</small>
+    </div>
+  </div>
+
+  <!-- Main Details Content -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    
+    <!-- Left Column: Match Schedule & Rules -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      
+      <!-- Match Schedule -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-gamepad text-acid"></i> Match Schedule & Room Access</h3>
+          <span class="badge badge-info">{{ matches|length }} Matches</span>
+        </div>
+
+        {% if matches %}
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            {% for match in matches %}
+              <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                    <span class="badge {% if match.status == 'Live' %}badge-danger{% elif match.status == 'Completed' %}badge-success{% else %}badge-info{% endif %}">
+                      Match #{{ match.match_number }}
+                    </span>
+                    <strong style="font-size: 1.15rem;">Map: {{ match.map }}</strong>
+                  </div>
+                  <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted);">
+                    <i class="fa-solid fa-clock"></i> {{ match.date }} at {{ match.time }}
+                  </div>
+                </div>
+
+                <div>
+                  <a href="{{ url_for('main.match_details', match_id=match.id) }}" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-key"></i> View Room Details
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--muted); text-align: center; padding: 20px;">Matches will be scheduled shortly by the tournament admins.</p>
+        {% endif %}
+      </div>
+
+      <!-- Tournament Rules -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-gavel text-orange"></i> Tournament Rules</h3>
+        </div>
+        <div style="white-space: pre-line; color: var(--text-dim); font-size: 14px; line-height: 1.8;">
+          {{ tournament.rules or '1. All players must have their official Free Fire UID registered.\n2. Squad captains must be present in the custom room 10 minutes before launch.\n3. Emulators strictly forbidden.\n4. Screen recording or score screenshot is mandatory for result validation.' }}
+        </div>
+      </div>
+
+      <!-- Prize Distribution -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-sack-dollar text-gold"></i> Prize Pool Distribution</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="cyber-table">
+            <thead>
+              <tr>
+                <th>Placement</th>
+                <th>Share</th>
+                <th>Estimated Reward</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong class="text-gold"><i class="fa-solid fa-trophy"></i> 1st Place (Champion)</strong></td>
+                <td>50%</td>
+                <td><strong class="text-acid">₹{{ (tournament.prize_pool * 0.5)|int }}</strong></td>
+              </tr>
+              <tr>
+                <td><strong class="text-silver"><i class="fa-solid fa-medal"></i> 2nd Place (Runner-up)</strong></td>
+                <td>30%</td>
+                <td><strong>₹{{ (tournament.prize_pool * 0.3)|int }}</strong></td>
+              </tr>
+              <tr>
+                <td><strong class="text-bronze"><i class="fa-solid fa-medal"></i> 3rd Place</strong></td>
+                <td>20%</td>
+                <td><strong>₹{{ (tournament.prize_pool * 0.2)|int }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Registered Squads Roster -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      <div class="panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-users text-cyan"></i> Registered Squads</h3>
+          <span class="badge badge-info">{{ teams|length }} Approved</span>
+        </div>
+
+        {% if teams %}
+          <div style="display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; padding-right: 4px;">
+            {% for t in teams %}
+              <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <strong style="color: var(--text);">{{ t.team_name }}</strong>
+                  <span style="font-family: var(--font-mono); font-size: 11px; color: var(--acid);">{{ t.team_id }}</span>
+                </div>
+                <div style="font-size: 12px; color: var(--muted);">
+                  Captain: {{ t.captain.name }} ({{ t.captain.free_fire_uid }})
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--muted); font-size: 13px; text-align: center; padding: 20px 0;">No squads registered yet. Be the first to claim a slot!</p>
+        {% endif %}
+      </div>
+
+      <div class="panel" style="text-align: center;">
+        <h4 style="margin-bottom: 8px;">Need Team Assistance?</h4>
+        <p style="color: var(--muted); font-size: 13px; margin-bottom: 16px;">Have questions about bracket seeds or room timings?</p>
+        <a href="{{ url_for('main.support') }}" class="btn btn-outline btn-sm" style="width: 100%;">
+          <i class="fa-solid fa-headset"></i> Contact Tournament Support
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}Match #{{ match.match_number }} - {{ tournament.name }} - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 850px;">
+  <div class="section-header">
+    <div class="section-title">
+      <i class="fa-solid fa-gamepad text-acid"></i>
+      <div>
+        <small>{{ tournament.name }}</small>
+        <h2>Match #{{ match.match_number }} Control Center</h2>
+      </div>
+    </div>
+    <span class="badge {% if match.status == 'Live' %}badge-danger{% elif match.status == 'Completed' %}badge-success{% else %}badge-info{% endif %}">
+      {{ match.status|upper }}
+    </span>
+  </div>
+
+  <!-- Match Info Strip -->
+  <div class="dash-stat-grid" style="margin-bottom: 28px;">
+    <div class="dash-stat-box primary">
+      <div class="box-label"><i class="fa-solid fa-map-location-dot"></i> Battleground</div>
+      <div class="box-value" style="font-size: 2rem;">{{ match.map }}</div>
+      <small style="color: var(--muted);">Map</small>
+    </div>
+
+    <div class="dash-stat-box cyan">
+      <div class="box-label"><i class="fa-solid fa-calendar"></i> Scheduled Date</div>
+      <div class="box-value" style="font-size: 1.8rem;">{{ match.date }}</div>
+      <small style="color: var(--muted);">Time: {{ match.time }}</small>
+    </div>
+
+    <div class="dash-stat-box orange">
+      <div class="box-label"><i class="fa-solid fa-users"></i> Format</div>
+      <div class="box-value" style="font-size: 1.8rem;">{{ tournament.game_mode }}</div>
+      <small style="color: var(--muted);">48 Player Lobby</small>
+    </div>
+  </div>
+
+  <!-- ROOM ACCESS SYSTEM (SECURE RELEASE) -->
+  {% if not is_eligible %}
+    <!-- ACCESS RESTRICTED FOR UNREGISTERED / UNAPPROVED USERS -->
+    <div class="room-card" style="margin-bottom: 30px; text-align: center; padding: 32px 18px; border: 1px dashed var(--orange);">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(255, 118, 86, 0.15); border: 2px solid var(--orange); display: flex; align-items: center; justify-content: center; color: var(--orange); font-size: 24px; margin: 0 auto 16px;">
+        <i class="fa-solid fa-user-lock"></i>
+      </div>
+      <span class="badge badge-warning" style="margin-bottom: 10px; font-size: 12px; letter-spacing: 1px;">ACCESS RESTRICTED</span>
+      <h3 style="color: var(--orange); margin-bottom: 8px; font-family: var(--font-display);">🔒 ACCESS DENIED - UNREGISTERED SQUAD</h3>
+      <p style="color: var(--muted); font-size: 14px; max-width: 520px; margin: 0 auto 16px;">
+        Custom Room ID & Password are strictly reserved for approved tournament participants. You are not registered for this tournament.
+      </p>
+      {% if not user_team %}
+        <a href="{{ url_for('main.team_register', tournament_id=tournament.id) }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-user-plus"></i> Register Squad For Tournament
+        </a>
+      {% elif user_team.status != 'APPROVED' %}
+        <span class="badge badge-info">Registration Status: {{ user_team.status }}</span>
+      {% endif %}
+    </div>
+
+  {% elif match.effective_room_status == 'NOT SET' or not match.room_id or not match.room_password %}
+    <!-- ROOM NOT SET -->
+    <div class="room-card" style="margin-bottom: 30px; text-align: center; padding: 32px 18px;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 24px; margin: 0 auto 16px;">
+        <i class="fa-solid fa-gamepad"></i>
+      </div>
+      <span class="badge badge-secondary" style="margin-bottom: 10px; font-size: 12px; letter-spacing: 1px;">ROOM NOT SET</span>
+      <h3 style="color: var(--text-dim); margin-bottom: 8px;">ROOM CREDENTIALS NOT SET</h3>
+      <p style="color: var(--muted); font-size: 14px; max-width: 500px; margin: 0 auto;">
+        Tournament administrators have not yet configured the Room ID and Password for this match. Please check back closer to match time.
+      </p>
+    </div>
+
+  {% elif not match.is_room_released() %}
+    <!-- ROOM DETAILS LOCKED BEFORE RELEASE -->
+    <div class="room-card" style="margin-bottom: 30px; text-align: center; padding: 32px 18px;">
+      <div style="width: 58px; height: 58px; border-radius: 50%; background: rgba(255, 118, 86, 0.15); border: 2px solid var(--orange); display: flex; align-items: center; justify-content: center; color: var(--orange); font-size: 26px; margin: 0 auto 16px;">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <span class="badge badge-warning" style="font-size: 12px; letter-spacing: 1px;">ROOM SCHEDULED</span>
+      </div>
+      <h3 style="color: var(--orange); margin-bottom: 8px; font-family: var(--font-display); letter-spacing: 1px; font-size: 1.8rem;">🔒 ROOM DETAILS LOCKED</h3>
+      <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 18px;">
+        Please wait for the room to open.
+      </p>
+
+      <div style="background: var(--surface-2); display: inline-block; padding: 16px 30px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 20px;">
+        <small style="display: block; font-family: var(--font-mono); color: var(--muted); font-size: 11px; letter-spacing: 1px; margin-bottom: 6px;">ROOM DETAILS WILL BE AVAILABLE AT:</small>
+        <div style="font-family: var(--font-display); font-size: 1.35rem; color: #ffffff; margin-bottom: 2px;">
+          {{ match.release_date_display }}
+        </div>
+        <div style="font-family: var(--font-display); font-size: 1.6rem; color: var(--acid);">
+          {{ match.release_time_display }}
+        </div>
+      </div>
+
+      <!-- Live Countdown Timer -->
+      {% if match.release_iso %}
+      <div style="margin-top: 6px;">
+        <small style="display: block; font-family: var(--font-mono); color: var(--muted); font-size: 12px; letter-spacing: 2px; margin-bottom: 6px;">ROOM OPENS IN</small>
+        <div id="roomCountdown" data-target="{{ match.release_iso }}" style="font-family: var(--font-mono); font-size: 2.2rem; font-weight: 800; color: var(--acid); letter-spacing: 2px; text-shadow: 0 0 20px rgba(210, 250, 81, 0.45);">
+          --:--:--
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  {% else %}
+    <!-- ROOM DETAILS UNLOCKED AFTER RELEASE -->
+    <div class="room-card released" style="margin-bottom: 30px; background: linear-gradient(145deg, rgba(20, 24, 18, 0.95), rgba(12, 14, 11, 0.98)); border: 1px solid var(--acid); border-radius: var(--radius-md); padding: 24px; box-shadow: 0 0 35px rgba(210, 250, 81, 0.15);">
+      <div class="room-lock-status" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(210, 250, 81, 0.2); border: 2px solid var(--acid); display: flex; align-items: center; justify-content: center; color: var(--acid); font-size: 22px;">
+            <i class="fa-solid fa-gamepad"></i>
+          </div>
+          <div>
+            <h3 style="color: var(--acid); margin-bottom: 2px; font-family: var(--font-display); letter-spacing: 1px; font-size: 1.6rem;">🎮 ROOM DETAILS</h3>
+            <p style="color: var(--text-dim); font-size: 13px; margin: 0;">Custom room is open. Join the Free Fire lobby now.</p>
+          </div>
+        </div>
+        <div>
+          <span class="badge badge-success" style="font-size: 13px; padding: 6px 14px; letter-spacing: 1px; font-family: var(--font-mono);">
+            <i class="fa-solid fa-door-open"></i> Status: ROOM OPEN
+          </span>
+        </div>
+      </div>
+
+      <!-- Room ID Box -->
+      <div class="room-cred-box" style="display: flex; justify-content: space-between; align-items: center; background: var(--surface-2); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 12px;">
+        <div>
+          <small style="color: var(--muted); font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">ROOM ID</small>
+          <div class="cred-val" id="roomIdDisplay" style="font-family: var(--font-mono); font-size: 1.8rem; font-weight: 800; color: var(--acid); letter-spacing: 1px;">{{ match.room_id }}</div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="copyToClipboard('{{ match.room_id }}', this, 'ROOM ID COPIED!')">
+          <i class="fa-solid fa-copy"></i> COPY ROOM ID
+        </button>
+      </div>
+
+      <!-- Password Box -->
+      <div class="room-cred-box" style="display: flex; justify-content: space-between; align-items: center; background: var(--surface-2); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 20px;">
+        <div>
+          <small style="color: var(--muted); font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">PASSWORD</small>
+          <div class="cred-val text-orange" id="roomPassDisplay" style="font-family: var(--font-mono); font-size: 1.8rem; font-weight: 800; color: var(--orange); letter-spacing: 1px;">{{ match.room_password }}</div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="copyToClipboard('{{ match.room_password }}', this, 'PASSWORD COPIED!')">
+          <i class="fa-solid fa-copy"></i> COPY PASSWORD
+        </button>
+      </div>
+
+      <!-- Action Bar: JOIN MATCH button -->
+      <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 16px;">
+        <button type="button" class="btn btn-primary" onclick="openJoinMatchModal('{{ match.room_id }}', '{{ match.room_password }}')">
+          <i class="fa-solid fa-play"></i> JOIN MATCH
+        </button>
+        <div style="font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-shield-halved text-acid"></i> Do not share these credentials with unauthorized non-registered players.
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- SQUAD SUBMISSION ACTIONS -->
+  {% if user_team %}
+    <div class="panel" style="margin-bottom: 30px;">
+      <div class="panel-header">
+        <h3><i class="fa-solid fa-flag-checkered text-acid"></i> Post-Match Result Submission</h3>
+        <span class="badge badge-info">Captain Access</span>
+      </div>
+
+      {% if user_result %}
+        <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <strong>Result Status for {{ user_team.team_name }}</strong>
+            {% if user_result.verification_status == 'APPROVED' %}
+              <span class="badge badge-success"><i class="fa-solid fa-check"></i> APPROVED</span>
+            {% elif user_result.verification_status == 'PENDING VERIFICATION' %}
+              <span class="badge badge-warning"><i class="fa-solid fa-clock"></i> PENDING VERIFICATION</span>
+            {% else %}
+              <span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> REJECTED</span>
+            {% endif %}
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 14px;">
+            <div>Placement: <strong class="text-gold">#{{ user_result.placement }}</strong> ({{ user_result.placement_points }} pts)</div>
+            <div>Kills: <strong class="text-orange">{{ user_result.kills }}</strong> ({{ user_result.kill_points }} pts)</div>
+            <div>Total Points: <strong class="text-acid">{{ user_result.total_points }} pts</strong></div>
+          </div>
+
+          {% if user_result.verification_status != 'APPROVED' %}
+            <div style="margin-top: 14px;">
+              <a href="{{ url_for('main.result_submit', match_id=match.id) }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-pen-to-square"></i> Update Submitted Score / Screenshot
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <p style="color: var(--text-dim); margin-bottom: 16px; font-size: 14px;">
+          Match completed? Upload your squad's final placement and kill screenshot to register your score on the leaderboard.
+        </p>
+        <a href="{{ url_for('main.result_submit', match_id=match.id) }}" class="btn btn-primary">
+          <i class="fa-solid fa-upload"></i> Submit Match Result & Screenshot
+        </a>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="panel" style="text-align: center; padding: 24px;">
+      <p style="color: var(--muted); font-size: 14px;">You must be a registered captain in this tournament to submit match results.</p>
+    </div>
+  {% endif %}
+
+  <!-- Back Link -->
+  <div style="text-align: center; margin-top: 24px;">
+    <a href="{{ url_for('main.tournament_details', tournament_id=tournament.id) }}" class="btn btn-outline btn-sm">
+      <i class="fa-solid fa-arrow-left"></i> Back to Tournament Details
+    </a>
+  </div>
+</div>
+
+<!-- JOIN MATCH MODAL (ONLY AVAILABLE TO ELIGIBLE SQUADS WHEN ROOM IS OPEN) -->
+{% if is_eligible and match.is_room_released() %}
+<dialog id="joinMatchModal" style="background: var(--surface); border: 1px solid var(--acid); border-radius: var(--radius-md); padding: 26px; color: var(--text); max-width: 500px; width: 92%; margin: auto; box-shadow: 0 0 50px rgba(0, 0, 0, 0.95);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h3 style="color: var(--acid); margin: 0; font-family: var(--font-display);"><i class="fa-solid fa-gamepad"></i> Join Free Fire Custom Room</h3>
+    <button type="button" onclick="document.getElementById('joinMatchModal').close()" style="background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer;">&times;</button>
+  </div>
+  <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 18px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <span style="font-size: 12px; color: var(--muted); font-family: var(--font-mono);">ROOM ID:</span>
+      <code id="modalRoomId" style="font-size: 16px; color: var(--acid); font-weight: 700;">{{ match.room_id }}</code>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 12px; color: var(--muted); font-family: var(--font-mono);">PASSWORD:</span>
+      <code id="modalRoomPass" style="font-size: 16px; color: var(--orange); font-weight: 700;">{{ match.room_password }}</code>
+    </div>
+  </div>
+  <ol style="font-size: 13px; line-height: 1.8; color: var(--text-dim); padding-left: 18px; margin-bottom: 20px;">
+    <li>Launch <strong>Free Fire</strong> on your mobile device.</li>
+    <li>In the Lobby, click the <strong>Mode Selection</strong> button.</li>
+    <li>Switch to the <strong>Custom</strong> tab.</li>
+    <li>Search for Room ID: <strong style="color: var(--acid);">{{ match.room_id }}</strong>.</li>
+    <li>Click <strong>Join</strong>, enter Password: <strong style="color: var(--orange);">{{ match.room_password }}</strong>, and enter your slot!</li>
+  </ol>
+  <div style="display: flex; gap: 10px;">
+    <button type="button" class="btn btn-outline btn-sm" style="flex: 1;" onclick="copyToClipboard('{{ match.room_id }}', this, 'ID COPIED!')">
+      <i class="fa-solid fa-copy"></i> Copy ID
+    </button>
+    <button type="button" class="btn btn-outline btn-sm" style="flex: 1;" onclick="copyToClipboard('{{ match.room_password }}', this, 'PASS COPIED!')">
+      <i class="fa-solid fa-key"></i> Copy Pass
+    </button>
+    <button type="button" class="btn btn-primary btn-sm" style="flex: 1;" onclick="document.getElementById('joinMatchModal').close()">
+      Close
+    </button>
+  </div>
+</dialog>
+{% endif %}
+{% endblock %}

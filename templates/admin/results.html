@@ -1,0 +1,162 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block admin_content %}
+<div>
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+    <div>
+      <span class="badge badge-warning" style="margin-bottom: 6px;">FAIR PLAY AUDIT</span>
+      <h1>RESULT VERIFICATION</h1>
+      <p style="color: var(--muted); font-size: 14px;">Inspect scoreboard screenshots, verify kills/placements, and calculate official points.</p>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+    <a href="{{ url_for('admin.results', status='ALL') }}" class="btn {% if active_status == 'ALL' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">All Results ({{ results|length }})</a>
+    <a href="{{ url_for('admin.results', status='PENDING VERIFICATION') }}" class="btn {% if active_status == 'PENDING VERIFICATION' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Pending Verification</a>
+    <a href="{{ url_for('admin.results', status='APPROVED') }}" class="btn {% if active_status == 'APPROVED' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Approved</a>
+    <a href="{{ url_for('admin.results', status='REJECTED') }}" class="btn {% if active_status == 'REJECTED' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Rejected</a>
+  </div>
+
+  <div class="panel" style="padding: 0; overflow: hidden;">
+    <div class="table-responsive">
+      <table class="cyber-table">
+        <thead>
+          <tr>
+            <th>Squad & ID</th>
+            <th>Match & Map</th>
+            <th>Rank</th>
+            <th>Kills</th>
+            <th>Calculated Points</th>
+            <th>Screenshot Proof</th>
+            <th>Status</th>
+            <th style="text-align: right;">Verification Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+            <tr>
+              <td>
+                <strong style="font-size: 1.05rem;">{{ r.team.team_name }}</strong><br>
+                <small style="color: var(--acid); font-family: var(--font-mono);">{{ r.team.team_id }}</small>
+              </td>
+              <td>
+                <strong>Match #{{ r.match.match_number }}</strong><br>
+                <small style="color: var(--muted);">{{ r.match.tournament.name }} ({{ r.match.map }})</small>
+              </td>
+              <td>
+                <span class="rank-badge rank-{% if r.placement == 1 %}1{% elif r.placement == 2 %}2{% elif r.placement == 3 %}3{% else %}other{% endif %}">
+                  #{{ r.placement }}
+                </span>
+              </td>
+              <td>
+                <strong class="text-orange" style="font-size: 1.2rem;">{{ r.kills }}</strong>
+              </td>
+              <td>
+                <div>Placement: <strong>{{ r.placement_points }}</strong></div>
+                <div>Kills: <strong>{{ r.kill_points }}</strong></div>
+                <div style="color: var(--acid); font-weight: 800; font-size: 1.1rem; border-top: 1px solid var(--border); margin-top: 2px;">
+                  Total: {{ r.total_points }} pts
+                </div>
+              </td>
+              <td>
+                {% if r.screenshot %}
+                  <a href="{{ url_for('static', filename='uploads/' + r.screenshot) }}" target="_blank" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-image"></i> View Proof
+                  </a>
+                {% else %}
+                  <span style="color: var(--muted); font-size: 12px;">No proof</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if r.verification_status == 'APPROVED' %}
+                  <span class="badge badge-success"><i class="fa-solid fa-check"></i> APPROVED</span>
+                {% elif r.verification_status == 'PENDING VERIFICATION' %}
+                  <span class="badge badge-warning"><i class="fa-solid fa-clock"></i> PENDING</span>
+                {% else %}
+                  <span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> REJECTED</span>
+                {% endif %}
+              </td>
+              <td style="text-align: right;">
+                <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
+                  <!-- Approve -->
+                  <form method="POST" action="{{ url_for('admin.verify_result', result_id=r.id) }}">
+                    <input type="hidden" name="action" value="APPROVE">
+                    <button type="submit" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 11px;" title="Approve and Auto-Calculate Points">
+                      <i class="fa-solid fa-check"></i> Approve
+                    </button>
+                  </form>
+
+                  <!-- Reject -->
+                  <form method="POST" action="{{ url_for('admin.verify_result', result_id=r.id) }}">
+                    <input type="hidden" name="action" value="REJECT">
+                    <button type="submit" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11px; color: var(--orange);" title="Reject Result">
+                      <i class="fa-solid fa-ban"></i> Reject
+                    </button>
+                  </form>
+
+                  <!-- Edit Score Modal Trigger -->
+                  <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px;" onclick="openEditScoreModal('{{ r.id }}', '{{ r.team.team_name }}', '{{ r.placement }}', '{{ r.kills }}')" title="Adjust Score">
+                    <i class="fa-solid fa-pencil"></i> Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 36px; color: var(--muted);">
+                No results found matching this filter.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- EDIT SCORE DIALOG -->
+  <dialog id="editScoreModal" style="background: var(--surface); border: 1px solid var(--acid); border-radius: var(--radius-md); padding: 28px; color: var(--text); max-width: 480px; width: 90%; margin: auto; box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+      <h3><i class="fa-solid fa-pen text-acid"></i> Edit Score & Auto-Calculate</h3>
+      <button type="button" onclick="document.getElementById('editScoreModal').close()" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;">&times;</button>
+    </div>
+
+    <form id="editScoreForm" method="POST" action="">
+      <input type="hidden" name="action" value="EDIT">
+      <div style="font-size: 14px; margin-bottom: 14px;">
+        Squad: <strong id="modalTeamName" class="text-acid"></strong>
+      </div>
+
+      <div class="form-group">
+        <label for="modalPlacement">Verified Placement (Rank)</label>
+        <input type="number" id="modalPlacement" name="placement" min="1" max="48" required>
+      </div>
+
+      <div class="form-group">
+        <label for="modalKills">Verified Total Kills</label>
+        <input type="number" id="modalKills" name="kills" min="0" max="60" required>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1;">Update & Approve</button>
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('editScoreModal').close()">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+</div>
+
+<script>
+function openEditScoreModal(id, teamName, placement, kills) {
+  const modal = document.getElementById('editScoreModal');
+  const form = document.getElementById('editScoreForm');
+  form.action = "{{ url_for('admin.results') }}".replace('results', 'result/verify/' + id);
+
+  document.getElementById('modalTeamName').textContent = teamName;
+  document.getElementById('modalPlacement').value = placement;
+  document.getElementById('modalKills').value = kills;
+
+  modal.showModal();
+}
+</script>
+{% endblock %}

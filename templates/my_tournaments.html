@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}My Tournaments - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="section-header">
+    <div class="section-title">
+      <i class="fa-solid fa-gamepad text-acid"></i>
+      <div>
+        <small>PERSONAL TOURNAMENT HUB</small>
+        <h2>My Tournaments</h2>
+      </div>
+    </div>
+    <a href="{{ url_for('main.tournaments') }}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-plus"></i> Join Another Tournament
+    </a>
+  </div>
+
+  <!-- LIVE MATCHES SECTION -->
+  {% if live %}
+    <div style="margin-bottom: 36px;">
+      <h3 style="color: var(--orange); margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+        <span class="tour-status-badge status-live" style="position: static;">● LIVE</span> Currently In Progress
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+        {% for item in live %}
+          <div class="panel" style="border-color: var(--orange); box-shadow: 0 0 20px rgba(255, 118, 86, 0.15);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+              <span class="badge badge-danger">LIVE MATCH</span>
+              <span style="font-family: var(--font-mono); color: var(--acid); font-weight: 700;">{{ item.team.team_id }}</span>
+            </div>
+            <h4>{{ item.tournament.name }}</h4>
+            <div style="font-size: 14px; color: var(--muted); margin: 6px 0 16px;">
+              Team: <strong style="color: var(--text);">{{ item.team.team_name }}</strong>
+            </div>
+
+            {% if item.match %}
+              <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px; font-size: 13px;">
+                <div><i class="fa-solid fa-calendar"></i> {{ item.match.date }} at {{ item.match.time }}</div>
+                <div><i class="fa-solid fa-map-location-dot"></i> Map: {{ item.match.map }}</div>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <a href="{{ url_for('main.match_details', match_id=item.match.id) }}" class="btn btn-orange" style="flex: 1;">
+                  <i class="fa-solid fa-key"></i> Room Access
+                </a>
+                <a href="{{ url_for('main.result_submit', match_id=item.match.id) }}" class="btn btn-primary" style="flex: 1;">
+                  <i class="fa-solid fa-upload"></i> Submit Score
+                </a>
+              </div>
+            {% else %}
+              <a href="{{ url_for('main.tournament_details', tournament_id=item.tournament.id) }}" class="btn btn-outline" style="width: 100%;">
+                View Details
+              </a>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- UPCOMING TOURNAMENTS SECTION -->
+  <div style="margin-bottom: 36px;">
+    <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+      <i class="fa-solid fa-calendar-check text-acid"></i> Upcoming Tournaments
+    </h3>
+
+    {% if upcoming %}
+      <div class="table-responsive panel" style="padding: 0; overflow: hidden;">
+        <table class="cyber-table">
+          <thead>
+            <tr>
+              <th>Team ID</th>
+              <th>Team Name</th>
+              <th>Tournament</th>
+              <th>Next Match</th>
+              <th>Map</th>
+              <th>Registration</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in upcoming %}
+              <tr>
+                <td><strong class="text-acid" style="font-family: var(--font-mono);">{{ item.team.team_id }}</strong></td>
+                <td><strong>{{ item.team.team_name }}</strong></td>
+                <td>{{ item.tournament.name }}</td>
+                <td>
+                  {% if item.match %}
+                    {{ item.match.date }} at {{ item.match.time }}
+                  {% else %}
+                    {{ item.tournament.date }} at {{ item.tournament.time }}
+                  {% endif %}
+                </td>
+                <td>{{ item.match.map if item.match else item.tournament.map }}</td>
+                <td>
+                  {% if item.status == 'APPROVED' %}
+                    <span class="badge badge-success">APPROVED</span>
+                  {% else %}
+                    <span class="badge badge-warning">PENDING</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if item.match %}
+                    <a href="{{ url_for('main.match_details', match_id=item.match.id) }}" class="btn btn-primary btn-sm">
+                      <i class="fa-solid fa-key"></i> Room Details
+                    </a>
+                  {% else %}
+                    <a href="{{ url_for('main.tournament_details', tournament_id=item.tournament.id) }}" class="btn btn-outline btn-sm">
+                      <i class="fa-solid fa-eye"></i> Details
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="panel" style="text-align: center; padding: 36px;">
+        <p style="color: var(--muted); margin-bottom: 12px;">You have no upcoming tournaments registered.</p>
+        <a href="{{ url_for('main.tournaments') }}" class="btn btn-primary btn-sm">Join a Tournament Now</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- COMPLETED TOURNAMENTS SECTION -->
+  {% if completed %}
+    <div>
+      <h3 style="color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-clock-rotate-left"></i> Completed Tournaments
+      </h3>
+      <div class="table-responsive panel" style="padding: 0; overflow: hidden;">
+        <table class="cyber-table">
+          <thead>
+            <tr>
+              <th>Team ID</th>
+              <th>Team Name</th>
+              <th>Tournament</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in completed %}
+              <tr>
+                <td><strong style="font-family: var(--font-mono);">{{ item.team.team_id }}</strong></td>
+                <td>{{ item.team.team_name }}</td>
+                <td>{{ item.tournament.name }}</td>
+                <td>{{ item.tournament.date }}</td>
+                <td><span class="badge badge-info">COMPLETED</span></td>
+                <td>
+                  <a href="{{ url_for('main.leaderboard', tournament_id=item.tournament.id) }}" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-ranking-star"></i> View Leaderboard
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

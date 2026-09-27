@@ -1,0 +1,96 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block admin_content %}
+<div>
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+    <div>
+      <span class="badge badge-warning" style="margin-bottom: 6px;">PLAYER CARE</span>
+      <h1>SUPPORT INBOX & COMPLAINTS</h1>
+      <p style="color: var(--muted); font-size: 14px;">Review player inquiries, dispute reports, and send official replies.</p>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+    <a href="{{ url_for('admin.complaints', status='ALL') }}" class="btn {% if active_status == 'ALL' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">All ({{ complaints|length }})</a>
+    <a href="{{ url_for('admin.complaints', status='OPEN') }}" class="btn {% if active_status == 'OPEN' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Open</a>
+    <a href="{{ url_for('admin.complaints', status='IN PROGRESS') }}" class="btn {% if active_status == 'IN PROGRESS' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">In Progress</a>
+    <a href="{{ url_for('admin.complaints', status='RESOLVED') }}" class="btn {% if active_status == 'RESOLVED' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Resolved</a>
+  </div>
+
+  {% if complaints %}
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      {% for c in complaints %}
+        <div class="panel">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                <span class="badge badge-info">{{ c.category }}</span>
+                <h3 style="font-size: 1.25rem;">{{ c.subject }}</h3>
+              </div>
+              <div style="font-size: 13px; color: var(--muted);">
+                Player: <strong>{{ c.user.name }}</strong> ({{ c.user.email }}) • 
+                FF UID: <strong class="text-acid">{{ c.user.free_fire_uid or 'N/A' }}</strong> • 
+                Submitted: {{ c.created_at.strftime('%Y-%m-%d at %I:%M %p') }}
+              </div>
+            </div>
+
+            <div>
+              {% if c.status == 'OPEN' %}
+                <span class="badge badge-warning">OPEN</span>
+              {% elif c.status == 'IN PROGRESS' %}
+                <span class="badge badge-info">IN PROGRESS</span>
+              {% else %}
+                <span class="badge badge-success">RESOLVED</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Player Message -->
+          <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 16px; color: var(--text-dim); font-size: 14px;">
+            <strong style="color: var(--text); display: block; margin-bottom: 4px;"><i class="fa-solid fa-message"></i> Player Message:</strong>
+            {{ c.message }}
+          </div>
+
+          <!-- Existing Reply if any -->
+          {% if c.admin_reply %}
+            <div style="background: rgba(210, 250, 81, 0.08); border-left: 3px solid var(--acid); padding: 12px 16px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-bottom: 16px;">
+              <strong style="color: var(--acid); font-size: 12px; display: block; margin-bottom: 4px;">Current Admin Reply:</strong>
+              <div style="color: var(--text); font-size: 14px;">{{ c.admin_reply }}</div>
+            </div>
+          {% endif %}
+
+          <!-- Reply & Status Form -->
+          <form method="POST" action="{{ url_for('admin.reply_complaint', complaint_id=c.id) }}">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="reply_{{ c.id }}">Send / Update Reply</label>
+              <textarea id="reply_{{ c.id }}" name="admin_reply" rows="2" placeholder="Write response to player..." required>{{ c.admin_reply or '' }}</textarea>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <label for="status_{{ c.id }}" style="margin-bottom: 0;">Status:</label>
+                <select id="status_{{ c.id }}" name="status" style="width: auto; padding: 6px 12px;">
+                  <option value="OPEN" {% if c.status == 'OPEN' %}selected{% endif %}>OPEN</option>
+                  <option value="IN PROGRESS" {% if c.status == 'IN PROGRESS' %}selected{% endif %}>IN PROGRESS</option>
+                  <option value="RESOLVED" {% if c.status == 'RESOLVED' %}selected{% endif %}>RESOLVED</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-reply"></i> Send Reply & Update Status
+              </button>
+            </div>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="panel" style="text-align: center; padding: 48px; color: var(--muted);">
+      <i class="fa-solid fa-inbox" style="font-size: 3rem; margin-bottom: 14px; display: block;"></i>
+      <h3>Inbox Zero</h3>
+      <p>No complaints found under this status filter.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block admin_content %}
+<div>
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+    <div>
+      <span class="badge badge-warning" style="margin-bottom: 6px;">COMPETITION AUDITING</span>
+      <h1>ADMIN STANDINGS & LEADERBOARD</h1>
+      <p style="color: var(--muted); font-size: 14px;">Live standings auto-calculated from verified match reports.</p>
+    </div>
+
+    <!-- Tournament Selector -->
+    <div style="min-width: 280px;">
+      <select onchange="window.location.href = '{{ url_for('admin.leaderboard') }}?tournament_id=' + this.value;">
+        {% for t in tournaments %}
+          <option value="{{ t.id }}" {% if selected_tournament and selected_tournament.id == t.id %}selected{% endif %}>
+            {{ t.name }} ({{ t.status }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  {% if selected_tournament %}
+    <div class="panel" style="padding: 0; overflow: hidden;">
+      <div class="table-responsive">
+        <table class="cyber-table">
+          <thead>
+            <tr>
+              <th style="width: 70px;">Rank</th>
+              <th>Team ID</th>
+              <th>Squad Name</th>
+              <th>Captain</th>
+              <th style="text-align: center;">Matches Scored</th>
+              <th style="text-align: center;">Kills</th>
+              <th style="text-align: center;">Placement Pts</th>
+              <th style="text-align: center;">Kill Pts</th>
+              <th style="text-align: right;">Total Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in leaderboard %}
+              <tr class="{% if row.rank == 1 %}podium-1{% elif row.rank == 2 %}podium-2{% elif row.rank == 3 %}podium-3{% endif %}">
+                <td>
+                  <span class="rank-badge {% if row.rank == 1 %}rank-1{% elif row.rank == 2 %}rank-2{% elif row.rank == 3 %}rank-3{% else %}rank-other{% endif %}">
+                    {{ row.rank }}
+                  </span>
+                </td>
+                <td>
+                  <strong style="font-family: var(--font-mono); color: var(--acid);">{{ row.team.team_id }}</strong>
+                </td>
+                <td>
+                  <strong style="font-size: 1.05rem;">{{ row.team.team_name }}</strong>
+                </td>
+                <td>
+                  {{ row.team.captain.name }}
+                </td>
+                <td style="text-align: center;">{{ row.matches }}</td>
+                <td style="text-align: center;">
+                  <strong class="text-orange">{{ row.kills }}</strong>
+                </td>
+                <td style="text-align: center;">{{ row.placement_points }}</td>
+                <td style="text-align: center;">{{ row.kill_points }}</td>
+                <td style="text-align: right;">
+                  <strong class="text-acid" style="font-size: 1.3rem; font-family: var(--font-display);">
+                    {{ row.total_points }}
+                  </strong>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="9" style="text-align: center; padding: 36px; color: var(--muted);">
+                  No verified scores yet for this tournament.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <p style="color: var(--muted);">No tournaments available.</p>
+  {% endif %}
+</div>
+{% endblock %}

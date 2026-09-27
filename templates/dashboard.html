@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Player Dashboard - MICKY FF ARENA{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Dashboard Welcome Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 30px;">
+    <div>
+      <span class="badge badge-success" style="margin-bottom: 8px;">PLAYER CONSOLE</span>
+      <h1>WELCOME, <span class="text-acid">{{ user.name }}</span></h1>
+      <p style="color: var(--muted); font-size: 14px;">
+        IGN: <strong style="color: var(--text);">{{ user.in_game_name or 'Not set' }}</strong> • 
+        FF UID: <strong style="color: var(--text);">{{ user.free_fire_uid or 'Not set' }}</strong>
+      </p>
+    </div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <a href="{{ url_for('main.tournaments') }}" class="btn btn-primary">
+        <i class="fa-solid fa-trophy"></i> Browse Tournaments
+      </a>
+      <a href="{{ url_for('main.profile') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-user-pen"></i> Edit Profile
+      </a>
+    </div>
+  </div>
+
+  <!-- Real Statistics Grid -->
+  <div class="dash-stat-grid">
+    <div class="dash-stat-box primary">
+      <div class="box-label"><i class="fa-solid fa-trophy"></i> Tournaments</div>
+      <div class="box-value">{{ user.tournaments_played }}</div>
+      <small style="color: var(--muted); font-size: 12px;">Active & Completed</small>
+    </div>
+
+    <div class="dash-stat-box cyan">
+      <div class="box-label"><i class="fa-solid fa-gamepad"></i> Matches Played</div>
+      <div class="box-value">{{ user.matches_played }}</div>
+      <small style="color: var(--muted); font-size: 12px;">Verified Results</small>
+    </div>
+
+    <div class="dash-stat-box gold">
+      <div class="box-label"><i class="fa-solid fa-crown"></i> Booyahs (Wins)</div>
+      <div class="box-value">{{ user.wins }}</div>
+      <small style="color: var(--muted); font-size: 12px;">1st Place Finishes</small>
+    </div>
+
+    <div class="dash-stat-box orange">
+      <div class="box-label"><i class="fa-solid fa-crosshairs"></i> Total Kills</div>
+      <div class="box-value">{{ user.total_kills }}</div>
+      <small style="color: var(--muted); font-size: 12px;">Confirmed Frags</small>
+    </div>
+
+    <div class="dash-stat-box primary">
+      <div class="box-label"><i class="fa-solid fa-chart-line"></i> Total Points</div>
+      <div class="box-value text-acid">{{ user.total_points }}</div>
+      <small style="color: var(--muted); font-size: 12px;">Placement + Kill pts</small>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 10px;">
+    <!-- Left Column: Upcoming Matches & My Teams -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      
+      <!-- Upcoming Matches -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-clock text-acid"></i> Scheduled Matches & Room Access</h3>
+          <a href="{{ url_for('main.my_tournaments') }}" class="btn btn-outline btn-sm">All Matches</a>
+        </div>
+
+        {% if upcoming_matches %}
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            {% for match in upcoming_matches %}
+              <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <span class="badge {% if match.status == 'Live' %}badge-danger{% else %}badge-info{% endif %}">
+                      Match #{{ match.match_number }}
+                    </span>
+                    <strong style="color: var(--text); font-size: 1.1rem;">{{ match.tournament.name }}</strong>
+                  </div>
+                  <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted);">
+                    <i class="fa-solid fa-map-location-dot"></i> {{ match.map }} • 
+                    <i class="fa-solid fa-calendar"></i> {{ match.date }} at {{ match.time }}
+                  </div>
+                </div>
+
+                <div>
+                  <a href="{{ url_for('main.match_details', match_id=match.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-key"></i> View Room Details
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 32px 0; color: var(--muted);">
+            <i class="fa-solid fa-gamepad" style="font-size: 2.2rem; margin-bottom: 12px; display: block;"></i>
+            <p>No active match rooms scheduled right now.</p>
+            <a href="{{ url_for('main.tournaments') }}" class="btn btn-outline btn-sm" style="margin-top: 12px;">Join an upcoming tournament</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- My Registered Squads -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-users text-cyan"></i> My Squads</h3>
+          <span class="badge badge-info">{{ my_teams|length }} Teams</span>
+        </div>
+
+        {% if my_teams %}
+          <div class="table-responsive">
+            <table class="cyber-table">
+              <thead>
+                <tr>
+                  <th>Team ID</th>
+                  <th>Team Name</th>
+                  <th>Tournament</th>
+                  <th>Roster</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for team in my_teams %}
+                  <tr>
+                    <td><strong class="text-acid" style="font-family: var(--font-mono);">{{ team.team_id }}</strong></td>
+                    <td><strong>{{ team.team_name }}</strong></td>
+                    <td>{{ team.tournament.name }}</td>
+                    <td>
+                      <small style="color: var(--text-dim); display: block;">
+                        <strong>P2:</strong> {{ team.player2_name }} ({{ team.player2_uid }})<br>
+                        <strong>P3:</strong> {{ team.player3_name }} ({{ team.player3_uid }})<br>
+                        <strong>P4:</strong> {{ team.player4_name }} ({{ team.player4_uid }})
+                      </small>
+                    </td>
+                    <td>
+                      {% if team.status == 'APPROVED' %}
+                        <span class="badge badge-success">APPROVED</span>
+                      {% elif team.status == 'PENDING' %}
+                        <span class="badge badge-warning">PENDING</span>
+                      {% else %}
+                        <span class="badge badge-danger">REJECTED</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 32px 0; color: var(--muted);">
+            <p>You have not registered any squads yet.</p>
+            <a href="{{ url_for('main.tournaments') }}" class="btn btn-primary btn-sm" style="margin-top: 12px;">Register your squad</a>
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Right Column: Recent Results & Notifications -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      
+      <!-- Notifications Box -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-bell text-acid"></i> Alerts</h3>
+          <a href="{{ url_for('main.notifications') }}" style="font-size: 13px;">View All</a>
+        </div>
+        
+        {% if recent_notifs %}
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for n in recent_notifs %}
+              <div style="background: var(--surface-2); border-left: 3px solid {% if n.is_read %}var(--border){% else %}var(--acid){% endif %}; padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <strong style="font-size: 13px; color: {% if n.is_read %}var(--text-dim){% else %}var(--text){% endif %};">{{ n.title }}</strong>
+                  <small style="color: var(--muted); font-size: 11px;">{{ n.created_at.strftime('%b %d') }}</small>
+                </div>
+                <p style="color: var(--muted); font-size: 12px; margin: 0;">{{ n.message }}</p>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--muted); font-size: 13px;">No notifications yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- Recent Submitted Results -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-file-invoice text-orange"></i> Result Status</h3>
+        </div>
+        {% if recent_results %}
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for r in recent_results %}
+              <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <strong>Match #{{ r.match.match_number }}</strong>
+                  {% if r.verification_status == 'APPROVED' %}
+                    <span class="badge badge-success">APPROVED</span>
+                  {% elif r.verification_status == 'PENDING VERIFICATION' %}
+                    <span class="badge badge-warning">PENDING</span>
+                  {% else %}
+                    <span class="badge badge-danger">REJECTED</span>
+                  {% endif %}
+                </div>
+                <div style="font-size: 13px; color: var(--text-dim);">
+                  Rank: <strong class="text-gold">#{{ r.placement }}</strong> • 
+                  Kills: <strong class="text-orange">{{ r.kills }}</strong> • 
+                  Points: <strong class="text-acid">{{ r.total_points }} pts</strong>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--muted); font-size: 13px;">No results submitted yet.</p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+
+{% block title %}MICKY FF ARENA - Free Fire Esports Tournaments{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-bg-overlay"></div>
+  <div class="container hero-content">
+    <div class="hero-tag">
+      <i class="fa-solid fa-fire text-orange"></i> OFFICIAL FREE FIRE ESPORTS PORTAL
+    </div>
+    <h1 class="hero-title">MICKY <span>FF ARENA</span></h1>
+    <div class="hero-subtitle">JOIN • COMPETE • WIN</div>
+    <p class="hero-desc">
+      The ultimate arena for Free Fire champions. Assemble your squad, register for premier daily tournaments, receive secure custom room credentials, and climb the verified leaderboard.
+    </p>
+    <div class="hero-actions">
+      <a href="{{ url_for('main.tournaments') }}" class="btn btn-primary btn-lg">
+        <i class="fa-solid fa-gamepad"></i> Join Tournament
+      </a>
+      {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-lg">
+          <i class="fa-solid fa-right-to-bracket"></i> Login
+        </a>
+      {% else %}
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary btn-lg">
+          <i class="fa-solid fa-gauge-high"></i> Player Dashboard
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Stats Strip -->
+<div class="container">
+  <div class="stats-strip">
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fa-solid fa-trophy"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ total_tournaments }}</div>
+        <div class="stat-label">Tournaments Hosted</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ total_teams }}</div>
+        <div class="stat-label">Registered Squads</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fa-solid fa-crosshairs"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ total_matches }}</div>
+        <div class="stat-label">Total Matches</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fa-solid fa-sack-dollar text-orange"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">₹90,000+</div>
+        <div class="stat-label">Prize Pool Distributed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE TOURNAMENTS SECTION (If any) -->
+  {% if live_tournaments %}
+    <div class="section-header">
+      <div class="section-title">
+        <i class="fa-solid fa-circle-play text-orange"></i>
+        <div>
+          <small>CURRENTLY IN BATTLE</small>
+          <h2>Live Tournaments</h2>
+        </div>
+      </div>
+      <a href="{{ url_for('main.tournaments', status='LIVE') }}" class="btn btn-outline btn-sm">View All Live</a>
+    </div>
+
+    <div class="tournament-grid">
+      {% for tour in live_tournaments %}
+        <div class="tour-card">
+          <div class="tour-banner-wrap">
+            <img src="{{ tour.banner or 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80' }}" alt="{{ tour.name }}" class="tour-banner-img">
+            <div class="tour-overlay"></div>
+            <span class="tour-status-badge status-live">● LIVE NOW</span>
+            <span class="tour-map-badge"><i class="fa-solid fa-map-location-dot"></i> {{ tour.map }}</span>
+          </div>
+          <div class="tour-body">
+            <h3 class="tour-title">{{ tour.name }}</h3>
+            <div class="tour-meta-grid">
+              <div class="tour-meta-item">
+                <small>Date & Time</small>
+                <strong>{{ tour.date }} | {{ tour.time }}</strong>
+              </div>
+              <div class="tour-meta-item">
+                <small>Game Mode</small>
+                <strong>{{ tour.game_mode }}</strong>
+              </div>
+              <div class="tour-meta-item">
+                <small>Entry Fee</small>
+                <strong class="fee">{% if tour.entry_fee == 0 %}FREE{% else %}₹{{ tour.entry_fee|int }}{% endif %}</strong>
+              </div>
+              <div class="tour-meta-item">
+                <small>Prize Pool</small>
+                <strong class="prize">₹{{ tour.prize_pool|int }}</strong>
+              </div>
+            </div>
+            <div class="tour-capacity">
+              <div class="capacity-label">
+                <span>Teams: {{ tour.registered_teams_count }} / {{ tour.max_teams }}</span>
+                <span>{{ ((tour.registered_teams_count / tour.max_teams) * 100)|int }}% Full</span>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-fill" style="width: {{ [((tour.registered_teams_count / tour.max_teams) * 100)|int, 100]|min }}%;"></div>
+              </div>
+            </div>
+            <div class="tour-foot">
+              <a href="{{ url_for('main.tournament_details', tournament_id=tour.id) }}" class="btn btn-primary" style="width: 100%;">
+                <i class="fa-solid fa-eye"></i> View Tournament
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- UPCOMING TOURNAMENTS SECTION -->
+  <div class="section-header">
+    <div class="section-title">
+      <i class="fa-solid fa-calendar-days text-acid"></i>
+      <div>
+        <small>OPEN FOR SQUAD REGISTRATION</small>
+        <h2>Upcoming Tournaments</h2>
+      </div>
+    </div>
+    <a href="{{ url_for('main.tournaments', status='UPCOMING') }}" class="btn btn-outline btn-sm">Explore All</a>
+  </div>
+
+  <div class="tournament-grid">
+    {% for tour in upcoming_tournaments %}
+      <div class="tour-card">
+        <div class="tour-banner-wrap">
+          <img src="{{ tour.banner or 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80' }}" alt="{{ tour.name }}" class="tour-banner-img">
+          <div class="tour-overlay"></div>
+          {% if tour.status == 'REGISTRATION OPEN' %}
+            <span class="tour-status-badge status-open">REGISTRATION OPEN</span>
+          {% elif tour.status == 'FULL' %}
+            <span class="tour-status-badge status-full">FULL</span>
+          {% else %}
+            <span class="tour-status-badge status-upcoming">UPCOMING</span>
+          {% endif %}
+          <span class="tour-map-badge"><i class="fa-solid fa-map-location-dot"></i> {{ tour.map }}</span>
+        </div>
+        <div class="tour-body">
+          <h3 class="tour-title">{{ tour.name }}</h3>
+          <div class="tour-meta-grid">
+            <div class="tour-meta-item">
+              <small>Date & Time</small>
+              <strong>{{ tour.date }} | {{ tour.time }}</strong>
+            </div>
+            <div class="tour-meta-item">
+              <small>Game Mode</small>
+              <strong>{{ tour.game_mode }}</strong>
+            </div>
+            <div class="tour-meta-item">
+              <small>Entry Fee</small>
+              <strong class="fee">{% if tour.entry_fee == 0 %}FREE{% else %}₹{{ tour.entry_fee|int }}{% endif %}</strong>
+            </div>
+            <div class="tour-meta-item">
+              <small>Prize Pool</small>
+              <strong class="prize">₹{{ tour.prize_pool|int }}</strong>
+            </div>
+          </div>
+          <div class="tour-capacity">
+            <div class="capacity-label">
+              <span>Teams: {{ tour.registered_teams_count }} / {{ tour.max_teams }}</span>
+              <span>{{ ((tour.registered_teams_count / tour.max_teams) * 100)|int }}% Full</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-fill" style="width: {{ [((tour.registered_teams_count / tour.max_teams) * 100)|int, 100]|min }}%;"></div>
+            </div>
+          </div>
+          <div class="tour-foot">
+            <a href="{{ url_for('main.tournament_details', tournament_id=tour.id) }}" class="btn btn-primary" style="width: 100%;">
+              <i class="fa-solid fa-crosshairs"></i> View Tournament
+            </a>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="panel" style="grid-column: 1 / -1; text-align: center; padding: 48px 24px;">
+        <i class="fa-solid fa-calendar-xmark" style="font-size: 3rem; color: var(--muted); margin-bottom: 16px;"></i>
+        <h3>No Upcoming Tournaments</h3>
+        <p style="color: var(--muted);">Check back soon or view our completed tournaments archive.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- HOW IT WORKS SECTION -->
+  <div id="how-it-works" style="margin: 60px 0;">
+    <div class="section-header">
+      <div class="section-title">
+        <i class="fa-solid fa-shield-halved text-cyan"></i>
+        <div>
+          <small>EASY SQUAD ONBOARDING</small>
+          <h2>How It Works</h2>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+      <div class="panel" style="position: relative;">
+        <span style="font-family: var(--font-display); font-size: 3rem; font-weight: 900; color: rgba(210, 250, 81, 0.15); position: absolute; top: 10px; right: 18px;">01</span>
+        <h4 style="color: var(--acid); margin-bottom: 8px;"><i class="fa-solid fa-user-plus"></i> Register Profile</h4>
+        <p style="color: var(--text-dim); font-size: 14px;">Sign up and link your official Free Fire UID and in-game name to participate in authenticated brackets.</p>
+      </div>
+
+      <div class="panel" style="position: relative;">
+        <span style="font-family: var(--font-display); font-size: 3rem; font-weight: 900; color: rgba(210, 250, 81, 0.15); position: absolute; top: 10px; right: 18px;">02</span>
+        <h4 style="color: var(--acid); margin-bottom: 8px;"><i class="fa-solid fa-users"></i> Form Squad</h4>
+        <p style="color: var(--text-dim); font-size: 14px;">Choose an open tournament and enter your team roster. You will instantly receive a unique <strong>Team ID</strong> (e.g. MFF-2026-001).</p>
+      </div>
+
+      <div class="panel" style="position: relative;">
+        <span style="font-family: var(--font-display); font-size: 3rem; font-weight: 900; color: rgba(210, 250, 81, 0.15); position: absolute; top: 10px; right: 18px;">03</span>
+        <h4 style="color: var(--acid); margin-bottom: 8px;"><i class="fa-solid fa-key"></i> Room Access</h4>
+        <p style="color: var(--text-dim); font-size: 14px;">Room ID and Password are automatically unlocked at the scheduled release time. Copy credentials directly with one tap.</p>
+      </div>
+
+      <div class="panel" style="position: relative;">
+        <span style="font-family: var(--font-display); font-size: 3rem; font-weight: 900; color: rgba(210, 250, 81, 0.15); position: absolute; top: 10px; right: 18px;">04</span>
+        <h4 style="color: var(--acid); margin-bottom: 8px;"><i class="fa-solid fa-trophy"></i> Verify & Rank</h4>
+        <p style="color: var(--text-dim); font-size: 14px;">Submit end-game scoreboard screenshots. Admins verify results and points automatically calculate onto the live leaderboard.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOURNAMENT RULES & SCORING SECTION -->
+  <div id="rules" style="margin: 60px 0;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+      <div class="panel" id="scoring">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-calculator text-acid"></i> Official Scoring System</h3>
+          <span class="badge badge-info">Standard Format</span>
+        </div>
+        <p style="color: var(--text-dim); margin-bottom: 16px; font-size: 14px;">
+          Formula: <strong class="text-acid">Total Points = Placement Points + Kill Points (1 pt per kill)</strong>
+        </p>
+        <div class="table-responsive">
+          <table class="cyber-table">
+            <thead>
+              <tr>
+                <th>Placement</th>
+                <th>Points</th>
+                <th>Placement</th>
+                <th>Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong class="text-gold">1st Place</strong></td>
+                <td><strong>15 pts</strong></td>
+                <td>6th Place</td>
+                <td>5 pts</td>
+              </tr>
+              <tr>
+                <td><strong class="text-silver">2nd Place</strong></td>
+                <td><strong>12 pts</strong></td>
+                <td>7th Place</td>
+                <td>4 pts</td>
+              </tr>
+              <tr>
+                <td><strong class="text-bronze">3rd Place</strong></td>
+                <td><strong>10 pts</strong></td>
+                <td>8th Place</td>
+                <td>3 pts</td>
+              </tr>
+              <tr>
+                <td>4th Place</td>
+                <td>8 pts</td>
+                <td>9th Place</td>
+                <td>2 pts</td>
+              </tr>
+              <tr>
+                <td>5th Place</td>
+                <td>6 pts</td>
+                <td>10th Place</td>
+                <td>1 pt</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-gavel text-orange"></i> Essential Tournament Rules</h3>
+          <span class="badge badge-warning">Zero Tolerance</span>
+        </div>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; color: var(--text-dim); font-size: 14px;">
+          <li><i class="fa-solid fa-ban text-orange" style="margin-right: 8px;"></i> <strong>No Emulators:</strong> Mobile devices (iOS/Android) only. PCs or emulator software will be banned.</li>
+          <li><i class="fa-solid fa-camera text-acid" style="margin-right: 8px;"></i> <strong>Score Proof:</strong> Captains must upload an uncropped screenshot of the end-game placement screen.</li>
+          <li><i class="fa-solid fa-clock text-cyan" style="margin-right: 8px;"></i> <strong>Punctuality:</strong> Custom room opens 15 minutes before match start. Lobby locks at exact match time.</li>
+          <li><i class="fa-solid fa-triangle-exclamation text-gold" style="margin-right: 8px;"></i> <strong>Teaming & Exploits:</strong> Teaming between squads or hacking scripts results in instant team disqualification.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLETED TOURNAMENTS ARCHIVE -->
+  {% if completed_tournaments %}
+    <div class="section-header">
+      <div class="section-title">
+        <i class="fa-solid fa-clock-rotate-left text-muted"></i>
+        <div>
+          <small>PAST GLORY</small>
+          <h2>Tournament History</h2>
+        </div>
+      </div>
+      <a href="{{ url_for('main.tournaments', status='COMPLETED') }}" class="btn btn-outline btn-sm">View Archive</a>
+    </div>
+
+    <div class="tournament-grid">
+      {% for tour in completed_tournaments %}
+        <div class="tour-card">
+          <div class="tour-banner-wrap">
+            <img src="{{ tour.banner or 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=800&q=80' }}" alt="{{ tour.name }}" class="tour-banner-img">
+            <div class="tour-overlay"></div>
+            <span class="tour-status-badge status-completed">COMPLETED</span>
+            <span class="tour-map-badge"><i class="fa-solid fa-map-location-dot"></i> {{ tour.map }}</span>
+          </div>
+          <div class="tour-body">
+            <h3 class="tour-title">{{ tour.name }}</h3>
+            <div class="tour-meta-grid">
+              <div class="tour-meta-item">
+                <small>Date</small>
+                <strong>{{ tour.date }}</strong>
+              </div>
+              <div class="tour-meta-item">
+                <small>Prize Pool</small>
+                <strong class="prize">₹{{ tour.prize_pool|int }}</strong>
+              </div>
+            </div>
+            <div class="tour-foot">
+              <a href="{{ url_for('main.tournament_details', tournament_id=tour.id) }}" class="btn btn-outline" style="width: 100%;">
+                <i class="fa-solid fa-eye"></i> View Standings
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
