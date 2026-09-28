@@ -191,7 +191,7 @@
                   <span style="font-family: var(--font-mono); font-size: 11px; color: var(--acid);">{{ t.team_id }}</span>
                 </div>
                 <div style="font-size: 12px; color: var(--muted);">
-                  Captain: {{ t.captain.name }} ({{ t.captain.free_fire_uid }})
+                  Captain: {{ t.captain.name if t.captain else 'Unknown' }} ({{ t.captain.free_fire_uid if t.captain and t.captain.free_fire_uid else 'N/A' }})
                 </div>
               </div>
             {% endfor %}

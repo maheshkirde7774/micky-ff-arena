@@ -25,18 +25,18 @@
   {% if notifications %}
     <div style="display: flex; flex-direction: column; gap: 14px;">
       {% for n in notifications %}
-        <div class="panel" style="padding: 18px 20px; border-left: 4px solid {% if n.is_read %}var(--border){% else %}var(--acid){% endif %}; background: {% if n.is_read %}var(--surface){% else %}var(--surface-2){% endif %};">
+        <div class="panel notif-card {% if n.is_read %}read{% else %}unread{% endif %}">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 6px;">
             <div style="display: flex; align-items: center; gap: 10px;">
               {% if not n.is_read %}
                 <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--acid); display: inline-block;"></span>
               {% endif %}
-              <h4 style="font-size: 1.15rem; color: {% if n.is_read %}var(--text-dim){% else %}var(--text){% endif %};">{{ n.title }}</h4>
+              <h4 class="notif-title">{{ n.title }}</h4>
             </div>
 
             <div style="display: flex; align-items: center; gap: 12px;">
               <small style="color: var(--muted); font-size: 12px;">
-                {{ n.created_at.strftime('%b %d, %Y - %I:%M %p') }}
+                {{ n.created_at.strftime('%b %d, %Y - %I:%M %p') if n.created_at and n.created_at.strftime else (n.created_at or '') }}
               </small>
               {% if not n.is_read %}
                 <form method="POST" action="{{ url_for('main.mark_notification_read', notif_id=n.id) }}">
@@ -48,7 +48,7 @@
             </div>
           </div>
 
-          <p style="color: var(--text-dim); font-size: 14px; margin-left: {% if not n.is_read %}18px{% else %}0{% endif %};">
+          <p class="notif-desc">
             {{ n.message }}
           </p>
         </div>

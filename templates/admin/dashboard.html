@@ -51,7 +51,7 @@
       <small style="color: var(--muted);">Custom Rooms</small>
     </div>
 
-    <div class="dash-stat-box" style="border-color: {% if pending_results > 0 %}var(--orange){% else %}var(--border){% endif %};">
+    <div class="dash-stat-box {% if pending_results > 0 %}pending orange{% endif %}">
       <div class="box-label"><i class="fa-solid fa-clock text-orange"></i> Pending Results</div>
       <div class="box-value text-orange">{{ pending_results }}</div>
       <small style="color: var(--muted);">Needs Verification</small>
@@ -143,7 +143,7 @@
               <span class="badge badge-info" style="font-size: 11px;">{{ c.category }}</span>
               <strong style="margin-left: 8px;">{{ c.subject }}</strong>
               <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
-                By: {{ c.user.name }} ({{ c.user.email }}) • {{ c.created_at.strftime('%b %d, %Y') }}
+                By: {{ c.user.name if c.user else 'Unknown Player' }} ({{ c.user.email if c.user else '' }}) • {{ c.created_at.strftime('%b %d, %Y') if c.created_at and c.created_at.strftime else (c.created_at or '') }}
               </div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">

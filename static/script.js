@@ -25,6 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Dynamic Progress Bars
+  document.querySelectorAll('.progress-fill[data-fill]').forEach(el => {
+    const fill = el.getAttribute('data-fill') || '0';
+    requestAnimationFrame(() => {
+      el.style.width = fill + '%';
+    });
+  });
+
   // Clipboard Copy Functionality
   window.copyToClipboard = function(text, btnElement, successMsg = 'COPIED!') {
     if (!navigator.clipboard) {
@@ -114,29 +122,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const targetIso = countdownEl.dataset.target;
     const targetDate = new Date(targetIso).getTime();
 
-    function updateCountdown() {
-      const now = new Date().getTime();
-      const diff = targetDate - now;
+    if (isNaN(targetDate)) {
+      countdownEl.textContent = "--:--:--";
+    } else {
+      let timerInterval = null;
+      let reloadScheduled = false;
 
-      if (isNaN(targetDate) || diff <= 0) {
-        countdownEl.textContent = "00:00:00";
-        countdownEl.style.color = "var(--acid)";
-        // Auto-refresh page once release time is reached to display revealed credentials
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-        return;
+      function updateCountdown() {
+        const now = new Date().getTime();
+        const diff = targetDate - now;
+
+        if (diff <= 0) {
+          countdownEl.textContent = "00:00:00";
+          countdownEl.style.color = "var(--acid)";
+          if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+          }
+          // Auto-refresh page once release time is reached to display revealed credentials
+          if (!reloadScheduled) {
+            reloadScheduled = true;
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          }
+          return;
+        }
+
+        const totalHours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const pad = (num) => String(num).padStart(2, '0');
+        countdownEl.textContent = `${pad(totalHours)}:${pad(minutes)}:${pad(seconds)}`;
       }
 
-      const totalHours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      const pad = (num) => String(num).padStart(2, '0');
-      countdownEl.textContent = `${pad(totalHours)}:${pad(minutes)}:${pad(seconds)}`;
+      updateCountdown();
+      if (!reloadScheduled) {
+        timerInterval = setInterval(updateCountdown, 1000);
+      }
     }
-
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
   }
 });

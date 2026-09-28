@@ -1,7 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from ff_arena import db
+
+def utc_now():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
@@ -14,7 +17,7 @@ class User(UserMixin, db.Model):
     in_game_name = db.Column(db.String(100), default='')
     profile_image = db.Column(db.String(255), default='default_avatar.png')
     is_admin = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     # Relationships
     teams = db.relationship('Team', backref='captain', lazy=True, cascade='all, delete-orphan')
@@ -82,7 +85,7 @@ class Tournament(db.Model):
     map = db.Column(db.String(50), default='Bermuda') # Bermuda, Purgatory, Kalahari, Alpine
     rules = db.Column(db.Text, default='')
     status = db.Column(db.String(50), default='REGISTRATION OPEN') # UPCOMING, REGISTRATION OPEN, FULL, LIVE, COMPLETED
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     # Relationships
     teams = db.relationship('Team', backref='tournament', lazy=True, cascade='all, delete-orphan')
@@ -123,7 +126,7 @@ class Team(db.Model):
     substitute_uid = db.Column(db.String(50), nullable=True, default='')
 
     status = db.Column(db.String(50), default='APPROVED') # APPROVED, PENDING, REJECTED
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     # Relationships
     results = db.relationship('Result', backref='team', lazy=True, cascade='all, delete-orphan')
@@ -145,8 +148,8 @@ class Match(db.Model):
     room_status = db.Column(db.String(50), default='NOT SET') # NOT SET, SCHEDULED, PUBLISHED, LIVE, COMPLETED
     room_published = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(50), default='Upcoming') # Upcoming, Live, Completed
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now)
 
     # Relationships
     results = db.relationship('Result', backref='match', lazy=True, cascade='all, delete-orphan')
@@ -173,7 +176,9 @@ class Match(db.Model):
         release_val = self.room_release_datetime or self.room_release_time
         if release_val:
             try:
-                clean_time = release_val.replace('T', ' ')
+                clean_time = release_val.replace('T', ' ').strip()
+                if '-' not in clean_time and self.date:
+                    clean_time = f"{self.date} {clean_time}"
                 rel_dt = datetime.strptime(clean_time[:16], '%Y-%m-%d %H:%M')
                 if datetime.now() >= rel_dt:
                     return 'PUBLISHED'
@@ -198,7 +203,9 @@ class Match(db.Model):
         if not release_val:
             return self.date
         try:
-            clean_time = release_val.replace('T', ' ')
+            clean_time = release_val.replace('T', ' ').strip()
+            if '-' not in clean_time and self.date:
+                clean_time = f"{self.date} {clean_time}"
             dt = datetime.strptime(clean_time[:16], '%Y-%m-%d %H:%M')
             return dt.strftime('%d %B %Y')
         except Exception:
@@ -210,7 +217,9 @@ class Match(db.Model):
         if not release_val:
             return self.time
         try:
-            clean_time = release_val.replace('T', ' ')
+            clean_time = release_val.replace('T', ' ').strip()
+            if '-' not in clean_time and self.date:
+                clean_time = f"{self.date} {clean_time}"
             dt = datetime.strptime(clean_time[:16], '%Y-%m-%d %H:%M')
             return dt.strftime('%I:%M %p').lstrip('0')
         except Exception:
@@ -225,7 +234,9 @@ class Match(db.Model):
         if not release_val:
             return f"{self.date} at {self.time}"
         try:
-            clean_time = release_val.replace('T', ' ')
+            clean_time = release_val.replace('T', ' ').strip()
+            if '-' not in clean_time and self.date:
+                clean_time = f"{self.date} {clean_time}"
             dt = datetime.strptime(clean_time[:16], '%Y-%m-%d %H:%M')
             return dt.strftime('%d %B %Y at %I:%M %p')
         except Exception:
@@ -239,7 +250,9 @@ class Match(db.Model):
         release_val = self.room_release_datetime or self.room_release_time
         if not release_val:
             return ""
-        clean_time = release_val.replace(' ', 'T')
+        clean_time = release_val.replace(' ', 'T').strip()
+        if '-' not in clean_time and self.date:
+            clean_time = f"{self.date}T{clean_time}"
         if len(clean_time) == 16:
             clean_time += ":00"
         return clean_time
@@ -251,6 +264,8 @@ class Match(db.Model):
             return val.split('T')[0]
         if val and ' ' in val:
             return val.split(' ')[0]
+        if val and '-' in val:
+            return val
         return self.date or ''
 
     @property
@@ -260,6 +275,8 @@ class Match(db.Model):
             return val.split('T')[1][:5]
         if val and ' ' in val:
             return val.split(' ')[1][:5]
+        if val and ':' in val and '-' not in val:
+            return val[:5]
         return self.time or ''
 
 
@@ -276,7 +293,7 @@ class Result(db.Model):
     total_points = db.Column(db.Integer, default=0)
     screenshot = db.Column(db.String(255), default='')
     verification_status = db.Column(db.String(50), default='PENDING VERIFICATION') # PENDING VERIFICATION, APPROVED, REJECTED
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
 
 class Notification(db.Model):
@@ -287,7 +304,7 @@ class Notification(db.Model):
     title = db.Column(db.String(150), nullable=False)
     message = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
 
 class Complaint(db.Model):
@@ -300,7 +317,7 @@ class Complaint(db.Model):
     message = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(50), default='OPEN') # OPEN, IN PROGRESS, RESOLVED
     admin_reply = db.Column(db.Text, default='')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
 
 class Setting(db.Model):
@@ -311,12 +328,12 @@ class Setting(db.Model):
 
     @classmethod
     def get_setting(cls, key, default=None):
-        item = cls.query.get(key)
+        item = db.session.get(cls, key)
         return item.value if item else default
 
     @classmethod
     def set_setting(cls, key, value):
-        item = cls.query.get(key)
+        item = db.session.get(cls, key)
         if not item:
             item = cls(key=key, value=str(value))
             db.session.add(item)

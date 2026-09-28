@@ -171,10 +171,10 @@
         {% if recent_notifs %}
           <div style="display: flex; flex-direction: column; gap: 12px;">
             {% for n in recent_notifs %}
-              <div style="background: var(--surface-2); border-left: 3px solid {% if n.is_read %}var(--border){% else %}var(--acid){% endif %}; padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;">
+              <div class="notif-mini {% if n.is_read %}read{% endif %}">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <strong style="font-size: 13px; color: {% if n.is_read %}var(--text-dim){% else %}var(--text){% endif %};">{{ n.title }}</strong>
-                  <small style="color: var(--muted); font-size: 11px;">{{ n.created_at.strftime('%b %d') }}</small>
+                  <strong class="notif-mini-title">{{ n.title }}</strong>
+                  <small style="color: var(--muted); font-size: 11px;">{{ n.created_at.strftime('%b %d') if n.created_at and n.created_at.strftime else '' }}</small>
                 </div>
                 <p style="color: var(--muted); font-size: 12px; margin: 0;">{{ n.message }}</p>
               </div>

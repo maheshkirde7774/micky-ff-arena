@@ -72,7 +72,7 @@
               <span>{{ ((tour.registered_teams_count / tour.max_teams) * 100)|int }}% Full</span>
             </div>
             <div class="progress-bar-wrap">
-              <div class="progress-fill" style="width: {{ [((tour.registered_teams_count / tour.max_teams) * 100)|int, 100]|min }}%;"></div>
+              <div class="progress-fill" data-fill="{{ [((tour.registered_teams_count / tour.max_teams) * 100)|int, 100]|min }}"></div>
             </div>
           </div>
 

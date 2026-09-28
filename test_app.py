@@ -144,7 +144,7 @@ def test_custom_room_system():
             db.session.commit()
 
         # Find tournament 2 where user 2 ('player@mickyarena.com') has approved team
-        tourn = Tournament.query.get(2) or Tournament.query.first()
+        tourn = db.session.get(Tournament, 2) or Tournament.query.first()
         reg_player_email = 'player@mickyarena.com'
 
         # Create or find a test match

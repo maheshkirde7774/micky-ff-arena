@@ -96,7 +96,7 @@
               {% endif %}
 
               <div style="margin-top: 10px; text-align: right; color: var(--muted); font-size: 11px;">
-                Submitted on {{ c.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                Submitted on {{ c.created_at.strftime('%b %d, %Y at %I:%M %p') if c.created_at and c.created_at.strftime else (c.created_at or 'Recently') }}
               </div>
             </div>
           {% endfor %}

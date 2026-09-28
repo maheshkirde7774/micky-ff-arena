@@ -47,6 +47,7 @@ def calculate_match_score(placement, kills):
 # ADMIN DASHBOARD
 # ==========================================
 @admin_bp.route('/')
+@admin_bp.route('/dashboard')
 @admin_required
 def dashboard():
     total_users = User.query.count()
@@ -135,7 +136,7 @@ def create_tournament():
 @admin_bp.route('/tournament/edit/<int:tournament_id>', methods=['GET', 'POST'])
 @admin_required
 def edit_tournament(tournament_id):
-    tournament = Tournament.query.get_or_404(tournament_id)
+    tournament = db.get_or_404(Tournament, tournament_id)
 
     if request.method == 'POST':
         tournament.name = request.form.get('name', '').strip()
@@ -161,7 +162,7 @@ def edit_tournament(tournament_id):
 @admin_bp.route('/tournament/delete/<int:tournament_id>', methods=['POST'])
 @admin_required
 def delete_tournament(tournament_id):
-    tournament = Tournament.query.get_or_404(tournament_id)
+    tournament = db.get_or_404(Tournament, tournament_id)
     name = tournament.name
     db.session.delete(tournament)
     db.session.commit()
@@ -172,7 +173,7 @@ def delete_tournament(tournament_id):
 @admin_bp.route('/tournament/status/<int:tournament_id>/<string:new_status>', methods=['POST'])
 @admin_required
 def set_tournament_status(tournament_id, new_status):
-    tournament = Tournament.query.get_or_404(tournament_id)
+    tournament = db.get_or_404(Tournament, tournament_id)
     tournament.status = new_status
     db.session.commit()
 
@@ -218,7 +219,7 @@ def teams():
 @admin_bp.route('/team/approve/<int:team_id>', methods=['POST'])
 @admin_required
 def approve_team(team_id):
-    team = Team.query.get_or_404(team_id)
+    team = db.get_or_404(Team, team_id)
     team.status = 'APPROVED'
 
     # Send Notification to Captain
@@ -237,7 +238,7 @@ def approve_team(team_id):
 @admin_bp.route('/team/reject/<int:team_id>', methods=['POST'])
 @admin_required
 def reject_team(team_id):
-    team = Team.query.get_or_404(team_id)
+    team = db.get_or_404(Team, team_id)
     team.status = 'REJECTED'
 
     notif = Notification(
@@ -255,7 +256,7 @@ def reject_team(team_id):
 @admin_bp.route('/team/delete/<int:team_id>', methods=['POST'])
 @admin_required
 def delete_team(team_id):
-    team = Team.query.get_or_404(team_id)
+    team = db.get_or_404(Team, team_id)
     name = team.team_name
     db.session.delete(team)
     db.session.commit()
@@ -306,7 +307,7 @@ def matches():
 @admin_bp.route('/match/room/<int:match_id>', methods=['POST'])
 @admin_required
 def manage_match_room(match_id):
-    match = Match.query.get_or_404(match_id)
+    match = db.get_or_404(Match, match_id)
     action = request.form.get('action', '').upper() # SAVE, UPDATE, PUBLISH, HIDE
 
     room_id = request.form.get('room_id', '').strip()
@@ -421,7 +422,7 @@ def manage_match_room(match_id):
 @admin_bp.route('/match/edit/<int:match_id>', methods=['POST'])
 @admin_required
 def edit_match(match_id):
-    match = Match.query.get_or_404(match_id)
+    match = db.get_or_404(Match, match_id)
 
     old_date = match.date
     old_time = match.time
@@ -485,7 +486,7 @@ def edit_match(match_id):
 @admin_bp.route('/match/delete/<int:match_id>', methods=['POST'])
 @admin_required
 def delete_match(match_id):
-    match = Match.query.get_or_404(match_id)
+    match = db.get_or_404(Match, match_id)
     # Notify registered players
     for team in match.tournament.teams:
         if team.status == 'APPROVED':
@@ -521,7 +522,7 @@ def results():
 @admin_bp.route('/result/verify/<int:result_id>', methods=['POST'])
 @admin_required
 def verify_result(result_id):
-    result = Result.query.get_or_404(result_id)
+    result = db.get_or_404(Result, result_id)
     action = request.form.get('action') # 'APPROVE', 'REJECT', 'EDIT'
 
     if action == 'APPROVE':
@@ -596,7 +597,7 @@ def leaderboard():
 
     selected_tournament = None
     if tournament_id:
-        selected_tournament = Tournament.query.get(tournament_id)
+        selected_tournament = db.session.get(Tournament, tournament_id)
     if not selected_tournament and tournaments:
         selected_tournament = tournaments[0]
 
@@ -659,7 +660,7 @@ def toggle_admin(user_id):
         flash('You cannot remove your own admin privileges.', 'warning')
         return redirect(url_for('admin.users'))
 
-    user = User.query.get_or_404(user_id)
+    user = db.get_or_404(User, user_id)
     user.is_admin = not user.is_admin
     db.session.commit()
 
@@ -687,7 +688,7 @@ def complaints():
 @admin_bp.route('/complaint/reply/<int:complaint_id>', methods=['POST'])
 @admin_required
 def reply_complaint(complaint_id):
-    complaint = Complaint.query.get_or_404(complaint_id)
+    complaint = db.get_or_404(Complaint, complaint_id)
     reply = request.form.get('admin_reply', '').strip()
     status = request.form.get('status', 'RESOLVED')
 

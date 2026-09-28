@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, abort
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
@@ -85,7 +85,7 @@ def profile():
         file = request.files.get('profile_image')
         if file and file.filename and allowed_file(file.filename):
             ext = file.filename.rsplit('.', 1)[1].lower()
-            filename = f"avatar_{current_user.id}_{int(datetime.utcnow().timestamp())}.{ext}"
+            filename = f"avatar_{current_user.id}_{int(datetime.now(timezone.utc).timestamp())}.{ext}"
             file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
             current_user.profile_image = filename
@@ -115,7 +115,7 @@ def tournaments():
 
 @main_bp.route('/tournament/<int:tournament_id>')
 def tournament_details(tournament_id):
-    tournament = Tournament.query.get_or_404(tournament_id)
+    tournament = db.get_or_404(Tournament, tournament_id)
     matches = Match.query.filter_by(tournament_id=tournament.id).order_by(Match.match_number.asc()).all()
     teams = Team.query.filter_by(tournament_id=tournament.id, status='APPROVED').all()
 
@@ -134,7 +134,7 @@ def tournament_details(tournament_id):
 @main_bp.route('/team/register/<int:tournament_id>', methods=['GET', 'POST'])
 @login_required
 def team_register(tournament_id):
-    tournament = Tournament.query.get_or_404(tournament_id)
+    tournament = db.get_or_404(Tournament, tournament_id)
 
     # Check if tournament accepts registrations
     if tournament.status not in ['REGISTRATION OPEN', 'UPCOMING']:
@@ -247,7 +247,7 @@ def my_tournaments():
 @main_bp.route('/match/<int:match_id>')
 @login_required
 def match_details(match_id):
-    match = Match.query.get_or_404(match_id)
+    match = db.get_or_404(Match, match_id)
     tournament = match.tournament
 
     # Check if current user is participating in this tournament with an approved team
@@ -294,7 +294,7 @@ def match_details(match_id):
 @main_bp.route('/match/<int:match_id>/room')
 @login_required
 def match_room_direct(match_id):
-    match = Match.query.get_or_404(match_id)
+    match = db.get_or_404(Match, match_id)
     tournament = match.tournament
     user_team = Team.query.filter_by(tournament_id=tournament.id, captain_id=current_user.id).first()
     is_admin = getattr(current_user, 'is_admin', False)
@@ -310,7 +310,7 @@ def match_room_direct(match_id):
 @main_bp.route('/result/submit/<int:match_id>', methods=['GET', 'POST'])
 @login_required
 def result_submit(match_id):
-    match = Match.query.get_or_404(match_id)
+    match = db.get_or_404(Match, match_id)
     tournament = match.tournament
 
     user_team = Team.query.filter_by(tournament_id=tournament.id, captain_id=current_user.id).first()
@@ -337,7 +337,7 @@ def result_submit(match_id):
 
         if screenshot_file and screenshot_file.filename and allowed_file(screenshot_file.filename):
             ext = screenshot_file.filename.rsplit('.', 1)[1].lower()
-            screenshot_filename = f"result_m{match.id}_t{user_team.id}_{int(datetime.utcnow().timestamp())}.{ext}"
+            screenshot_filename = f"result_m{match.id}_t{user_team.id}_{int(datetime.now(timezone.utc).timestamp())}.{ext}"
             file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], screenshot_filename)
             screenshot_file.save(file_path)
         elif not screenshot_filename:
@@ -382,7 +382,7 @@ def leaderboard(tournament_id=None):
     selected_tournament = None
 
     if tournament_id:
-        selected_tournament = Tournament.query.get(tournament_id)
+        selected_tournament = db.session.get(Tournament, tournament_id)
     if not selected_tournament and tournaments:
         selected_tournament = tournaments[0]
 
@@ -444,7 +444,7 @@ def notifications():
 @main_bp.route('/notifications/read/<int:notif_id>', methods=['POST'])
 @login_required
 def mark_notification_read(notif_id):
-    notif = Notification.query.get_or_404(notif_id)
+    notif = db.get_or_404(Notification, notif_id)
     if notif.user_id == current_user.id:
         notif.is_read = True
         db.session.commit()

@@ -943,6 +943,80 @@ textarea {
 .dash-stat-box.orange::after { background: var(--orange); }
 .dash-stat-box.cyan::after { background: var(--cyan); }
 .dash-stat-box.gold::after { background: var(--gold); }
+.dash-stat-box.pending { border-color: var(--orange); }
+
+/* NOTIFICATION & ALERT COMPONENTS */
+.notif-card {
+  padding: 18px 20px;
+  border-left: 4px solid var(--acid);
+  background: var(--surface-2);
+}
+.notif-card.read {
+  border-left-color: var(--border);
+  background: var(--surface);
+}
+.notif-card .notif-title {
+  font-size: 1.15rem;
+  color: var(--text);
+}
+.notif-card.read .notif-title {
+  color: var(--text-dim);
+}
+.notif-card .notif-desc {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+.notif-card.unread .notif-desc {
+  margin-left: 18px;
+}
+
+.notif-mini {
+  background: var(--surface-2);
+  border-left: 3px solid var(--acid);
+  padding: 10px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.notif-mini.read {
+  border-left-color: var(--border);
+}
+.notif-mini .notif-mini-title {
+  font-size: 13px;
+  color: var(--text);
+}
+.notif-mini.read .notif-mini-title {
+  color: var(--text-dim);
+}
+
+/* ERROR PAGE COMPONENT */
+.error-box {
+  max-width: 600px;
+  margin: 60px auto;
+  text-align: center;
+  padding: 40px 24px;
+}
+.error-box.status-404 {
+  border-color: var(--acid);
+}
+.error-box.status-500,
+.error-box.status-error {
+  border-color: var(--orange);
+}
+.error-code-display {
+  font-family: var(--font-display);
+  font-size: 4.5rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.error-box.status-404 .error-code-display {
+  color: var(--acid);
+  text-shadow: 0 0 25px rgba(210, 250, 81, 0.3);
+}
+.error-box.status-500 .error-code-display,
+.error-box.status-error .error-code-display {
+  color: var(--orange);
+  text-shadow: 0 0 25px rgba(255, 75, 43, 0.3);
+}
 
 .dash-stat-box .box-value {
   font-family: var(--font-display);

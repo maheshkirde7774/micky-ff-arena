@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
@@ -40,7 +40,7 @@ def create_app(test_config=None):
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
     # Register Blueprints
     from ff_arena.auth import auth_bp
@@ -50,6 +50,21 @@ def create_app(test_config=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(admin_bp, url_prefix='/admin')
+
+    # Safe datetime formatting filter for Jinja
+    @app.template_filter('datetime_format')
+    def datetime_format_filter(val, fmt='%b %d, %Y at %I:%M %p'):
+        if not val:
+            return ''
+        if isinstance(val, str):
+            try:
+                from datetime import datetime
+                val = datetime.fromisoformat(val.replace('Z', ''))
+            except Exception:
+                return val
+        if hasattr(val, 'strftime'):
+            return val.strftime(fmt)
+        return str(val)
 
     # Context processors to inject notifications count & active brand info
     @app.context_processor
@@ -67,5 +82,20 @@ def create_app(test_config=None):
             'tagline': 'JOIN • COMPETE • WIN',
             'unread_notifications_count': unread_notifs
         }
+
+    # Custom Error Handlers
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('error.html',
+                               error_code=404,
+                               error_title='ZONE NOT FOUND',
+                               error_message='The page, match lobby, or tournament sector you are looking for does not exist or has been relocated.'), 404
+
+    @app.errorhandler(500)
+    def server_error(e):
+        return render_template('error.html',
+                               error_code=500,
+                               error_title='SERVER SYSTEM MALFUNCTION',
+                               error_message='An unexpected system glitch occurred on the arena server. Our team has been notified.'), 500
 
     return app

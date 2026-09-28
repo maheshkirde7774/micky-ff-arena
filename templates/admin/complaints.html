@@ -29,9 +29,9 @@
                 <h3 style="font-size: 1.25rem;">{{ c.subject }}</h3>
               </div>
               <div style="font-size: 13px; color: var(--muted);">
-                Player: <strong>{{ c.user.name }}</strong> ({{ c.user.email }}) • 
-                FF UID: <strong class="text-acid">{{ c.user.free_fire_uid or 'N/A' }}</strong> • 
-                Submitted: {{ c.created_at.strftime('%Y-%m-%d at %I:%M %p') }}
+                Player: <strong>{{ c.user.name if c.user else 'Unknown Player' }}</strong> ({{ c.user.email if c.user else '' }}) • 
+                FF UID: <strong class="text-acid">{{ c.user.free_fire_uid if c.user and c.user.free_fire_uid else 'N/A' }}</strong> • 
+                Submitted: {{ c.created_at.strftime('%Y-%m-%d at %I:%M %p') if c.created_at and c.created_at.strftime else (c.created_at or '') }}
               </div>
             </div>
 
